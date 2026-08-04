@@ -87,11 +87,12 @@ to grant you access to these images, notify Axia and provide your AWS Account ID
 ### 2.1 The deployment bundle
 
 Axia ships a self-contained deployment bundle — you do not clone the source repos.
-Axia distributes it as an AWS S3 presigned URL; Axia will share the link with you.
-Download it and unpack it, then run every command below from inside it:
+It's published as a GitHub release at
+[github.com/Axia-Security/axia-deploy/releases](https://github.com/Axia-Security/axia-deploy/releases).
+Grab the version you need, download it, and unpack it, then run every command below from inside it:
 
 ```bash
-curl -o axia-deploy-<version>.tar.gz "<presigned-S3-URL-from-Axia>"
+curl -Lo axia-deploy-<version>.tar.gz "https://github.com/Axia-Security/axia-deploy/releases/download/<version>/axia-deploy-<version>.tar.gz"
 tar -xzf axia-deploy-<version>.tar.gz
 cd axia-deploy-<version>/
 ```

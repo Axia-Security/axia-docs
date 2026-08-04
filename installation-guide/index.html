@@ -388,8 +388,8 @@
         </div>
 
         <h3>The deployment bundle</h3>
-        <p>Axia ships a self-contained deployment bundle — you do not clone the source repos. Axia distributes it as an AWS S3 presigned URL; Axia will share the link with you. Download it and unpack it, then run every command below from inside it:</p>
-        <div class="code"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="label">bash</span></div><pre>curl -o axia-deploy-&lt;version&gt;.tar.gz <span class="v">"&lt;presigned-S3-URL-from-Axia&gt;"</span>
+        <p>Axia ships a self-contained deployment bundle — you do not clone the source repos. It's published as a GitHub release at <a href="https://github.com/Axia-Security/axia-deploy/releases">github.com/Axia-Security/axia-deploy/releases</a>. Grab the version you need, download it, and unpack it, then run every command below from inside it:</p>
+        <div class="code"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="label">bash</span></div><pre>curl -Lo axia-deploy-&lt;version&gt;.tar.gz <span class="v">"https://github.com/Axia-Security/axia-deploy/releases/download/&lt;version&gt;/axia-deploy-&lt;version&gt;.tar.gz"</span>
 tar -xzf axia-deploy-&lt;version&gt;.tar.gz
 <span class="k">cd</span> axia-deploy-&lt;version&gt;/</pre></div>
         <h4>Bundle contents</h4>
