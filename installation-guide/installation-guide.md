@@ -6,19 +6,19 @@
 > deployment in a dedicated AWS account (customer-owned or Axia-managed per-client).
 > **Scope:** end-to-end — AWS account bootstrap → Terraform infrastructure →
 > application services running on the host → verification.
-> **What you need:** the Axia deployment bundle (`axia-deploy-<version>.zip`). You do
+> **What you need:** the Axia deployment bundle (`axia-deploy-<version>.tar.gz`). You do
 > **not** need access to Axia's source repositories — everything the commands below
 > reference ships inside the bundle (see §2).
 
 ---
 
-## 1. What you are deploying
+## 1. Product Overview
 
 Axia is a security-event analysis platform. It ingests events from data sources
 (Microsoft 365 / Outlook, Microsoft Purview DLP, Cursor and other webhook sources, API),
 enriches and classifies them, detects sensitive-data exposure with an LLM, and surfaces
 cases in a web dashboard. Integration-specific setup for **Microsoft Purview** and
-**Cursor** is in §9.
+**Cursor** is in §8.
 
 ### 1.1 Target architecture (per deployment / per AWS account)
 
@@ -50,7 +50,7 @@ cases in a web dashboard. Integration-specific setup for **Microsoft Purview** a
         │  <AXIA_ECR_REGISTRY>/<service>:<tag>   (registry provided by Axia)
 ```
 
-**Two hosts.** The full product runs across **two EC2 instances**, each with its own
+**Hosts.** The full product runs across **two EC2 instances**, each with its own
 `docker-compose` file:
 
 | Host | Compose source | Runs |
@@ -61,7 +61,7 @@ cases in a web dashboard. Integration-specific setup for **Microsoft Purview** a
 The two hosts communicate over private-IP URLs (`LLM_SERVICE_URL`,
 `PARSER_SERVICE_URL`, and the ML box reaching Kafka via `KAFKA_ADVERTISED_HOST`).
 
-### 1.2 What Terraform provisions vs. what runs the app
+### 1.2 Terraform and Application
 
 Terraform **only builds the AWS infrastructure**; it never starts the application.
 The split:
@@ -70,7 +70,7 @@ The split:
 |---|---|
 | VPC, subnets, NAT, security groups | Kafka, Redis, all Axia service containers |
 | Platform EC2 + Classifier EC2 (Docker pre-installed via `user_data.sh`) | Started with `docker compose up -d` over SSM |
-| DocumentDB cluster (the "MongoDB") | Config generated from Terraform outputs + `client-config.env` |
+| DocumentDB cluster (the "MongoDB") | Config generated from Terraform outputs + `config.env` |
 | S3 content-store bucket + access credentials | |
 | IAM roles/policies (ECR pull, Bedrock invoke, SSM, CloudWatch, S3) | |
 | CloudWatch log groups | |
@@ -79,31 +79,52 @@ The split:
 
 ## 2. Prerequisites
 
-### 2.0 The deployment bundle
+### 2.0 What Axia must provide (self-host dependencies)
+
+Container images are stored in Axia's AWS ECR and are pulled cross-account. In order
+to grant you access to these images, notify Axia and provide your AWS Account ID.
+
+### 2.1 The deployment bundle
 
 Axia ships a self-contained deployment bundle — you do not clone the source repos.
-Unpack it and run every command below from inside it:
+It's published as a GitHub release at
+[github.com/Axia-Security/axia-deploy/releases](https://github.com/Axia-Security/axia-deploy/releases).
+Grab the version you need, download it, and unpack it, then run every command below from inside it:
+
+```bash
+curl -Lo axia-deploy-<version>.tar.gz "https://github.com/Axia-Security/axia-deploy/releases/download/<version>/axia-deploy-<version>.tar.gz"
+tar -xzf axia-deploy-<version>.tar.gz
+cd axia-deploy-<version>/
+```
+
+**Bundle contents**
 
 ```
 axia-deploy-<version>/
 ├── terraform/
-│   ├── init/            # terraform-backend.yaml, github-actions-role.yaml (bootstrap)
-│   ├── vpc/             # network stack
-│   ├── platform/        # EC2 + DocumentDB + S3 + IAM  (+ example.backend.hcl, example.tfvars)
-│   └── scripts/         # generate-deployment-config.sh, deploy.sh, ECR-cross-account-trust.sh
+│   ├── README.md        # terraform usage notes
+│   ├── init/            # terraform-backend.yaml (bootstrap)
+│   ├── vpc/             # network stack (+ backend.hcl.example, terraform.tfvars.example)
+│   └── platform/        # EC2 + DocumentDB + S3 + IAM  (+ backend.hcl.example, terraform.tfvars.example)
 ├── compose/
 │   ├── platform/docker-compose.yml   # platform host services
 │   └── ml/docker-compose.yml         # ML/classifier host services
-└── client-config.env.template
+├── configs/
+│   ├── platform/config.env.example   # platform client-config template
+│   ├── ml/config.env.example         # ML client-config template
+│   ├── fluent-bit-cloudwatch.conf    # CloudWatch log shipping config
+│   └── extract_service.lua           # fluent-bit Lua filter
+└── scripts/
+    ├── generate-deployment-config.sh
+    ├── deploy-v2.sh
+    └── encode-mongodb-password.py
 ```
 
-**Deliberately not in the bundle** (Axia-internal): the `apps-ci/` and `tenants/`
-Terraform stacks (they run only in Axia's ECR-hosting account), Axia's own per-environment
-`*.tfvars`/`*.backend.hcl` and account IDs, the GitHub Actions CI workflows, and repo
-history. The bundle's `platform/` stack ships an `example.backend.hcl` and
-`example.tfvars` for you to copy; the scripts are pre-fixed to bundle-relative paths.
+The bundle's `terraform/platform/` and `terraform/vpc/` stacks each ship a
+`backend.hcl.example` and `terraform.tfvars.example` for you to fill in and copy to
+`backend.hcl`/`terraform.tfvars` (see §4.1); the scripts are pre-fixed to bundle-relative paths.
 
-### 2.1 Operator workstation tooling
+### 2.2 Operator workstation tooling
 
 | Tool | Purpose |
 |---|---|
@@ -112,10 +133,10 @@ history. The bundle's `platform/` stack ships an `example.backend.hcl` and
 | `jq` | generating deployment config from TF outputs |
 | `python3` | password URL-encoding in the config generator |
 | Docker | (only for local testing) |
-| `unzip` | unpacking the Axia deployment bundle |
+| `tar` | unpacking the Axia deployment bundle |
 | **Session Manager plugin** for AWS CLI | connecting to the private-subnet EC2 hosts |
 
-### 2.2 AWS prerequisites
+### 2.3 AWS prerequisites
 
 - **A dedicated AWS account** for this deployment (each Axia environment = its own account).
 - **Admin access** to that account for the one-time bootstrap (§3), then the scoped
@@ -125,18 +146,6 @@ history. The bundle's `platform/` stack ships an `example.backend.hcl` and
   exact model IDs available via `aws bedrock list-foundation-models`.
 - **Region:** pick **one region** for the whole environment and use it consistently.
 
-### 2.3 What Axia must provide (self-host dependencies)
-
-Because the container images live in **Axia's ECR** and are
-pulled cross-account, a self-hosted deployment requires Axia to:
-
-1. **Grant cross-account ECR pull** for your account (see §5) — otherwise the host
-   cannot pull the service images.
-2. **Provide the bootstrap IAM policy documents** (`trust.json`, the deployment-role
-   and ops-role permission JSONs) referenced by the manual bootstrap path — these are
-   distributed by Axia, not committed to the repo.
-3. (Optionally) run the image builds / publish tagged releases to ECR.
-
 ### 2.4 Data-source / integration credentials (collect before deploy)
 
 Only what you intend to enable:
@@ -145,29 +154,25 @@ Only what you intend to enable:
   `MICROSOFT_CLIENT_ID`, `MICROSOFT_CLIENT_SECRET` (Graph permissions + admin
   consent), and `OUTLOOK_ORG_DOMAIN`.
 - **Microsoft Purview DLP:** an Entra app with the Graph `SecurityAlert.Read.All`
-  application permission (can reuse the Outlook app). Full steps in **§9.1**.
+  application permission (can reuse the Outlook app). Full steps in **§8.1**.
 - **Cursor (user-prompt events):** captured via Cursor's local `beforeSubmitPrompt` hook
   deployed to developer endpoints, forwarding to the webhook receiver — you set a webhook
-  source secret. Fleet-wide deployment needs Cursor Enterprise. See **§9.2**.
+  source secret. Fleet-wide deployment needs Cursor Enterprise. See **§8.2**.
 - **Webhook / API:** the inbound webhook and API connectors need no third-party
-  credentials — configure their source/topic settings in `client-config.env`.
+  credentials — configure their source/topic settings in `config.env`.
 - **SMTP** (optional reviewer-alert email): host/port/user/password/from-address.
 
 ---
 
 ## 3. Phase 0 — AWS account bootstrap (one-time)
 
-This creates the Terraform state backend and the IAM identities Terraform assumes.
+This creates the Terraform state backend that Terraform assumes.
 Run it once per account, with admin credentials.
-
-> There are two documented bootstrap variants. **Use the CloudFormation path below** —
-> it also creates the GitHub OIDC provider that the `platform` IAM stack depends on.
-> (The CLI-only variant in `CLIENT-AWS-SETUP.md` creates just the S3 bucket and
-> expects Axia-supplied role JSONs; prefer CloudFormation for a clean bootstrap.)
 
 ### 3.1 Set your context
 
 ```bash
+cd axia-deploy-<version>/
 export AWS_REGION=<your-region>
 export ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 echo "Deploying to account ${ACCOUNT_ID} in ${AWS_REGION}"
@@ -176,10 +181,10 @@ echo "Deploying to account ${ACCOUNT_ID} in ${AWS_REGION}"
 ### 3.2 Create the Terraform state backend (S3 + DynamoDB lock)
 
 ```bash
-cd axia-deploy/terraform
+cd terraform/init
 aws cloudformation create-stack \
   --stack-name terraform-backend \
-  --template-body file://init/terraform-backend.yaml \
+  --template-body file://terraform-backend.yaml \
   --region ${AWS_REGION}
 
 # Wait, then confirm
@@ -190,81 +195,51 @@ aws cloudformation describe-stacks --stack-name terraform-backend \
 This yields the state bucket by convention: **`terraform-state-<ACCOUNT_ID>-<REGION>`**
 versioned with public access blocked.
 
-### 3.3 Create the GitHub OIDC provider + deploy role
-
-```bash
-aws cloudformation create-stack \
-  --stack-name terraform-iac-github-actions-role \
-  --template-body file://init/github-actions-role.yaml \
-  --region ${AWS_REGION} \
-  --parameters \
-    ParameterKey=GitHubOwner,ParameterValue=Axia-Security \
-    ParameterKey=GitHubRepo,ParameterValue=infra \
-    ParameterKey=Region,ParameterValue=${AWS_REGION} \
-  --capabilities CAPABILITY_NAMED_IAM
-
-# Get the deploy role ARN
-aws cloudformation describe-stacks --stack-name terraform-iac-github-actions-role \
-  --region ${AWS_REGION} \
-  --query 'Stacks[0].Outputs[?OutputKey==`RoleArn`].OutputValue' --output text
-```
-
-> The OIDC provider (`token.actions.githubusercontent.com`) **must exist before** the
-> `platform` and `apps-ci` stacks apply — their IAM roles reference it.
-
 ---
 
 ## 4. Phase 1 — Terraform infrastructure
 
-Apply the stacks **in this order**:
-`vpc/` → `platform/` (→ `apps-ci/` only in the ECR-hosting account) → `tenants/`.
+Apply the stacks **in this order**: `terraform/vpc/` (optional) → `terraform/platform/`.
+Skip `terraform/vpc/` if you want to use your existing VPC and subnets instead (see §4.3).
 
 Backend convention for every stack: bucket `terraform-state-<ACCOUNT_ID>-<REGION>`,
-key `<stack>/terraform.tfstate`, region `<REGION>`.
+key `<REGION>/<stack>/terraform.tfstate`, region `<REGION>`.
 
 ### 4.1 Per-environment config files
 
-For each stack you apply, create a backend file (copy the bundled
-`terraform/platform/example.backend.hcl`). Example for `platform/`:
-
-```hcl
-bucket = "terraform-state-<ACCOUNT_ID>-<REGION>"
-key    = "platform/terraform.tfstate"
-region = "<REGION>"
-```
-
-And a `<env>.tfvars` (copy from the bundled `example.tfvars`):
-
-```hcl
-# terraform/platform/<env>.tfvars
-enable_alerts = false      # set true to enable CloudTrail/SNS/CloudWatch alarms
-
-roles_allowed_to_assume_platform_role = [
-  # SSO/admin role names in THIS account allowed to assume the platform EC2 role
-]
-```
-
-Other platform variables you may set (`variables.tf`): `region` (set to your chosen
-region), `project_name` (default `platform` — drives resource names and the EC2 `Name` tag),
-`documentdb_instance_class` (default `db.t3.medium`), `documentdb_instance_count`
-(default `1`), `documentdb_engine_version` (default `8.0.0`),
-`classifier_instance_type` (default `c7i-flex.4xlarge`), `classifier_volume_size`
-(default `200` GB), and — when `enable_alerts = true` — `alerts_email` and
-`alerts_client_name`.
-
-### 4.2 Apply the VPC stack
-
-Creates `10.0.0.0/16` with 3 public + 3 private `/20` subnets across 3 AZs and a NAT
-gateway. Its output is consumed by the platform stack via remote state.
+Both `terraform/vpc` and `terraform/platform` ship a `terraform.tfvars.example` and a
+`backend.hcl.example`, with `${ACCOUNT_ID}` / `${AWS_REGION}` placeholders. Expand them
+into the real `terraform.tfvars` / `backend.hcl` files with `envsubst` (recommended), or
+copy the `.example` files by hand and fill in the placeholders yourself. Terraform loads
+a file named `terraform.tfvars` automatically, so `plan`/`apply` don't need a `-var-file`
+flag once it exists:
 
 ```bash
-cd axia-deploy/terraform/vpc
-terraform init -reconfigure \
-  -backend-config="bucket=terraform-state-${ACCOUNT_ID}-${AWS_REGION}" \
-  -backend-config="key=vpc/terraform.tfstate" \
-  -backend-config="region=${AWS_REGION}"
-terraform plan  -var="region=${AWS_REGION}"
-terraform apply -var="region=${AWS_REGION}"
+cat terraform.tfvars.example | envsubst > terraform.tfvars
+cat backend.hcl.example      | envsubst > backend.hcl
+```
+
+Run this from inside each stack's directory, right before applying it — see §4.2
+(`terraform/vpc`) and §4.3 (`terraform/platform`).
+
+### 4.2 Apply the VPC stack (optional)
+
+Creates `10.0.0.0/16` with 3 public + 3 private `/20` subnets across 3 AZs and a NAT
+gateway. These are defaults — change `vpc_cidr`, `public_subnet_cidrs`, and
+`private_subnet_cidrs` in `terraform.tfvars` if you need different ranges. Its output
+is consumed by the platform stack via remote state. Skip this section if you're using
+an existing VPC (§4.3).
+
+```bash
+cd ../vpc     # axia-deploy/terraform/vpc
+export AWS_REGION=<your-region>
+export ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+cat terraform.tfvars.example | envsubst > terraform.tfvars
+cat backend.hcl.example      | envsubst > backend.hcl
+
+terraform init -backend-config=backend.hcl
+terraform plan
+terraform apply
 ```
 
 ### 4.3 Apply the platform stack
@@ -278,10 +253,34 @@ IAM roles/policies (ECR pull, Bedrock invoke, SSM, CloudWatch, S3, axia-internal
 CloudWatch log groups.
 
 ```bash
-cd axia-deploy/terraform/platform
-terraform init -reconfigure -backend-config=<env>.backend.hcl
-terraform plan  -var-file=<env>.tfvars
-terraform apply -var-file=<env>.tfvars
+cd ../platform     # axia-deploy/terraform/platform
+export AWS_REGION=<your-region>
+export ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+cat terraform.tfvars.example | envsubst > terraform.tfvars
+cat backend.hcl.example      | envsubst > backend.hcl
+```
+
+In the generated `terraform.tfvars`, fill in:
+
+- `roles_allowed_to_assume_platform_role` — SSO/admin role names in THIS account
+  allowed to assume the platform EC2 role.
+
+If you skipped `terraform/vpc/` and want to use your existing VPC and subnets instead:
+- leave `vpc_state_key` empty (`""`)
+- set `vpc_name` to the `Name` tag on the existing VPC
+- set `private_subnet_ids` / `public_subnet_ids` to the existing subnet IDs
+
+Other platform variables you may set (`variables.tf`): `project_name` (default
+`platform` — drives resource names and the EC2 `Name` tag), `documentdb_instance_class`
+(default `db.t3.medium`), `documentdb_instance_count` (default `1`),
+`documentdb_engine_version` (default `8.0.0`), `classifier_instance_type` (default
+`c7i-flex.4xlarge`), `classifier_volume_size` (default `200` GB), and — set
+`enable_alerts = true` to also set `alerts_email` and `alerts_client_name`.
+
+```bash
+terraform init -backend-config=backend.hcl
+terraform plan
+terraform apply
 ```
 
 **Capture the outputs** — you need them for the app layer:
@@ -295,173 +294,254 @@ terraform output s3_content_access_get_credentials_command
 terraform output classifier_ssm_command               # connect to the ML host
 ```
 
-### 4.4 Axia-side stacks (not in the bundle)
-
-Two further Terraform stacks — `apps-ci/` (creates the ECR repositories and the shared
-CI OIDC role) and `tenants/` (per-tenant read-only ECR-pull IAM users) — run **only in
-Axia's ECR-hosting account**. They are intentionally excluded from the deployment bundle;
-your account pulls images cross-account instead (§5). No action required from you.
-
 ---
 
-## 5. Phase 2 — Cross-account ECR access (Axia-side, one-time)
+## 5. Phase 2 — Deploy the application layer (Platform host)
 
-For a self-hosted account to pull images from Axia's ECR, Axia runs
-`ECR-cross-account-trust.sh` (Axia-side), which sets a repository policy on
-each service repo allowing your account root to `BatchCheckLayerAvailability`,
-`GetDownloadUrlForLayer`, and `BatchGetImage`.
+The application is delivered onto the EC2 host as a `docker-compose` stack: generate
+config from Terraform outputs, copy it and the compose file to the host over SSM, and
+run the deploy script. Covered below.
 
-The platform EC2 IAM role already grants the pull actions; the cross-account
-**repository policy** is the missing half that Axia must add for your account ID.
+Six files must be present in `/var/lib/axia` on the host before you deploy:
 
----
+| File | Where it comes from |
+|---|---|
+| `deployment-config.json` | Generated into `axia-deploy/configs/` by `scripts/generate-deployment-config.sh` (§5.1). |
+| `config.env` | Copy `configs/platform/config.env.example` and fill in the per-client values (§5.2). |
+| `docker-compose.yml` | Bundled at `compose/platform/docker-compose.yml`. |
+| `deploy-v2.sh` | Bundled at `scripts/deploy-v2.sh`; run it from `/var/lib/axia` on the host (§5.3). |
+| `fluent-bit-cloudwatch.conf` | Bundled at `configs/fluent-bit-cloudwatch.conf`. Fluent Bit config for the log-shipping sidecar: tails every container's Docker log, reassembles multi-line stack traces into single records, and ships each service's logs to its own CloudWatch stream. |
+| `extract_service.lua` | Bundled at `configs/extract_service.lua`. Lua filter the config above calls to derive each container's service name from its `com.docker.compose.service` label, so CloudWatch streams are named per-service rather than by container ID. |
 
-## 6. Phase 3 — Deploy the application layer (Platform host)
+### 5.1 Generate the deployment config
 
-The application is delivered onto the EC2 host as a `docker-compose` stack. Two paths:
-
-- **Manual (recommended for self-host):** generate config from Terraform outputs, copy
-  it and the compose file to the host over SSM, run the deploy script. Covered below.
-- **CI (Axia-managed):** the `platform-deploy.yml` GitHub Actions workflow assumes the
-  deploy role via OIDC, finds the instance by `Name` tag, and runs
-  `docker compose up -d` over SSM using GitHub Environment vars/secrets. Use this if
-  the account is managed inside Axia's GitHub org.
-
-### 6.1 Generate the deployment config
-
-From `terraform/platform` (after a successful apply), run the generator. It reads
-`terraform output`, fetches the DocumentDB password from Secrets Manager and the S3
-credentials from SSM, URL-encodes the password, and writes a
-`deployment-config-<CLIENT>.json`:
+From `axia-deploy/scripts` (after a successful `terraform apply` in `terraform/platform`),
+run the generator. It reads `terraform output`, fetches the DocumentDB password from
+Secrets Manager and the S3 credentials from SSM, URL-encodes the password, and writes
+`configs/deployment-config.json`:
 
 ```bash
-cd axia-deploy/terraform/platform
-../scripts/generate-deployment-config.sh <CLIENT_NAME>
+cd ../../scripts     # axia-deploy/scripts
+./generate-deployment-config.sh
 ```
 
-> The bundled `generate-deployment-config.sh` is pre-configured to resolve the platform
-> stack relative to the bundle, so no path editing is required.
+> The script resolves the platform stack relative to itself (`../terraform/platform`),
+> so no path editing is required.
 
-The resulting JSON contains: `account_id`, `aws_region`, `ecr_registry`,
+The resulting JSON contains: `account_id`, `aws_region`, `ecr_registry`, `ecr_region`,
 `documentdb_endpoint`, the full TLS `mongodb_uri`, `content_store_bucket`,
-`content_store_region`, and the S3 `access_key`/`secret_key`.
+`content_store_region`, `s3_access_key`, `s3_secret_key`, and `s3_url`.
 
-The MongoDB URI uses DocumentDB TLS form:
+Sample `deployment-config.json`:
 
+```json
+{
+  "account_id": "<account-id>",
+  "aws_region": "<region>",
+  "ecr_registry": "603685643976.dkr.ecr.us-east-2.amazonaws.com",
+  "ecr_region": "us-east-2",
+  "documentdb_endpoint": "<documentdb-cluster-endpoint>",
+  "mongodb_uri": "mongodb://docdbadmin:<url-encoded-pw>@<documentdb-cluster-endpoint>:27017/security_platform?directConnection=true&serverSelectionTimeoutMS=2000&tls=true&tlsAllowInvalidCertificates=true&retryWrites=false&authMechanism=SCRAM-SHA-1",
+  "content_store_bucket": "<account-id>-<region>-content-store",
+  "content_store_region": "<region>",
+  "s3_access_key": "<s3-access-key>",
+  "s3_secret_key": "<s3-secret-key>",
+  "s3_url": "https://s3.<region>.amazonaws.com"
+}
 ```
-mongodb://docdbadmin:<url-encoded-pw>@<endpoint>:27017/axia_security?tls=true&replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false&tlsCAFile=/app/certs/global-bundle.pem&authMechanism=SCRAM-SHA-1
-```
 
-### 6.2 Create `client-config.env`
+### 5.2 Create `config.env`
 
-Copy `client-config.env.template` (bundle root) to `client-config.env` and fill in the
-per-client, non-generated values (data-source credentials from §2.4). Leave a section
-commented if you are not enabling that connector.
+Copy `configs/platform/config.env.example` to `config.env` and fill in the per-client,
+non-generated values (data-source credentials from §2.4). Leave a section commented if
+you are not enabling that connector.
 
-### 6.3 Copy files to the host and deploy
+### 5.3 Copy files to the host and deploy
 
 Connect via SSM (private subnet — no SSH):
 
 ```bash
+cd ../terraform/platform     # axia-deploy/terraform/platform
 $(terraform output -raw ssm_command)   # aws ssm start-session --target i-xxxx ...
 ```
 
-Get the compose file and deploy assets onto the host (`~/axia/`). The three files the
-deploy script requires in the working directory are:
+Get the compose file and deploy assets onto the host, into `/var/lib/axia`. The six
+files the deploy script requires in that directory are:
 
-- `deployment-config.json` (from §6.1)
-- `client-config.env` (from §6.2)
-- `docker-compose.yml` — use the bundled `compose/platform/docker-compose.yml`
+- `deployment-config.json` (from §5.1)
+- `config.env` (from §5.2)
+- `docker-compose.yml` — the bundled `compose/platform/docker-compose.yml`
+- `deploy-v2.sh` — the bundled deploy script
+- `fluent-bit-cloudwatch.conf` — bundled at `configs/fluent-bit-cloudwatch.conf`
+- `extract_service.lua` — bundled at `configs/extract_service.lua`
 
-Then run the deploy script on the host. It:
+Then run the deploy script on the host:
+
+```bash
+cd /var/lib/axia     # on the EC2 host
+./deploy-v2.sh
+docker compose ps
+```
+
+It:
 
 1. installs `jq`/`python3` if missing;
-2. downloads the DocumentDB CA bundle to `~/axia/certs/global-bundle.pem`
+2. downloads the DocumentDB CA bundle to `/var/lib/axia/certs/global-bundle.pem`
    (`https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem`);
 3. logs Docker in to ECR
    (`aws ecr get-login-password | docker login ... <ecr_registry>`);
-4. generates `~/axia/.env` (maps config → service env keys, fans the Mongo URI out to
-   the services, sets the Bedrock `LLM_MODEL`, `KAFKA_BOOTSTRAP_SERVERS=kafka:29092`,
-   the S3/bucket vars) and **appends your entire `client-config.env`**;
+4. generates `/var/lib/axia/.env` (maps config → service env keys, fans the Mongo URI
+   out to the services, sets the Bedrock `LLM_MODEL`,
+   `KAFKA_BOOTSTRAP_SERVERS=kafka:29092`, the S3/bucket vars) and **appends your entire
+   `config.env`**;
 5. `docker compose pull` then `docker compose up -d --pull always`.
-
-```bash
-# on the EC2 host, in ~/axia
-./deploy.sh
-docker compose ps
-```
 
 The script is idempotent — safe to re-run for upgrades.
 
 ---
 
-## 7. Phase 4 — Deploy the ML / Classifier host
+## 6. Phase 3 — Deploy the ML / Classifier host
 
 Repeat the deploy on the **Classifier EC2** using the bundled
 `compose/ml/docker-compose.yml`, which runs `llm-service`, `parser-service`,
-`rapidocr`, and `data-classification`.
+`rapidocr`, and `data-classification`. This host reuses the same
+`deployment-config.json` generated in §5.1 and the same `deploy-v2.sh` script — only
+`config.env` and `docker-compose.yml` differ.
+
+Six files must be present in `/var/lib/axia` on this host before you deploy:
+
+| File | Where it comes from |
+|---|---|
+| `deployment-config.json` | The same file generated in §5.1 — copy it to this host too. |
+| `config.env` | Copy `configs/ml/config.env.example` and fill in the per-client values (§6.1). |
+| `docker-compose.yml` | Bundled at `compose/ml/docker-compose.yml`. |
+| `deploy-v2.sh` | Bundled at `scripts/deploy-v2.sh`; run it from `/var/lib/axia` on the host (§6.2). |
+| `fluent-bit-cloudwatch.conf` | Bundled at `configs/fluent-bit-cloudwatch.conf`. |
+| `extract_service.lua` | Bundled at `configs/extract_service.lua`. |
+
+### 6.1 Create `config.env`
+
+Copy `configs/ml/config.env.example` to `config.env` and fill in the per-client values:
+
+- `OBJECT_STORAGE_URL`, `SETTINGS_SERVICE_URL`, `REDIS_URL` — point these at the
+  **platform host's private IP** (the ML box reaches platform services over
+  private-IP URLs; `KAFKA_ADVERTISED_HOST` / `LLM_SERVICE_URL` / `PARSER_SERVICE_URL`
+  are the platform-side equivalents, set in *its* `config.env`, §5.2).
+- `LLM_MODEL`, `PROMPT_PATH` — set per the Bedrock model you were granted access to.
+- `CLASSIFIER_PREFILTER_ENABLED` — toggles the `data-classification` pre-filter in
+  front of `llm-service`; ships as `true` (the service itself defaults to `false` if
+  unset).
+- `COMPOSE_PROJECT_NAME` — keep this value the same on every redeploy from this host;
+  changing it creates a duplicate stack instead of reconciling the existing one (the
+  compose file defaults to `event-analyzer` if unset).
+- `DB_NAME` — matches the services' own default (`security_platform`); no need to
+  change it.
+- `LOG_LEVEL` — ships as `DEBUG`, more verbose than the services' own default
+  (`info`/`INFO`); lower it for production if you don't want debug-level noise.
+- Leave `DATA_BUCKET` and `AXIA_BUCKET` blank or remove the lines — both are
+  generated automatically from `deployment-config.json` by `deploy-v2.sh`; a
+  non-empty value here overrides the generated one.
+
+### 6.2 Copy files to the host and deploy
+
+Connect via SSM (private subnet — no SSH):
 
 ```bash
-$(terraform output -raw classifier_ssm_command)   # connect to the ML host
+# still in axia-deploy/terraform/platform (from §5.3)
+$(terraform output -raw classifier_ssm_command)   # aws ssm start-session --target i-xxxx ...
+```
+
+Get the compose file and deploy assets onto the host, into `/var/lib/axia`. The six
+files the deploy script requires in that directory are:
+
+- `deployment-config.json` (the same file from §5.1)
+- `config.env` (from §6.1)
+- `docker-compose.yml` — the bundled `compose/ml/docker-compose.yml`
+- `deploy-v2.sh` — the bundled deploy script
+- `fluent-bit-cloudwatch.conf` — bundled at `configs/fluent-bit-cloudwatch.conf`
+- `extract_service.lua` — bundled at `configs/extract_service.lua`
+
+Then run the deploy script on the host:
+
+```bash
+cd /var/lib/axia     # on the EC2 host
+./deploy-v2.sh
+docker compose ps
 ```
 
 Requirements specific to this host:
 
 - Bedrock must be reachable from the instance role, with **`AWS_DEFAULT_REGION` set**
   (a missing region is the classic `NoRegionError` for `llm-service`).
-- Mount the DocumentDB CA bundle at `/app/certs/global-bundle.pem` (the
-  `data-classification` service needs it).
 - The ML box reaches the platform Kafka via `KAFKA_ADVERTISED_HOST` = the platform
   host's private IP; the platform services reach the ML box via `LLM_SERVICE_URL` and
   `PARSER_SERVICE_URL` = the ML host's private IP.
 
 ---
 
-## 8. Phase 5 — Verification
+## 7. Phase 4 — Verification
 
 On each host:
 
 ```bash
+cd /var/lib/axia     # on each host
 docker compose ps                                   # all Up / healthy
 docker compose logs --tail 100 | grep -iE 'error|exception|failed'
 ```
 
 Service health endpoints (reach them from the host, or via SSM port-forward):
 
+**Platform host**
+
 | Component | Port | Check |
 |---|---|---|
+| kafka | 9092 | TCP connect (broker accepting connections) |
+| kafka-ui | 8081 | web UI, no healthcheck |
+| redis | 6379 | `redis-cli ping` → `PONG` |
+| object-storage-service | 8080 | `/healthz` |
 | dashboard (v1 UI) | 5173 | HTTP 200 on `/` |
 | application-frontend (v2 UI) | 5174 | HTTP 200 on `/` |
-| application-backend (v2 API) | 8088 | `/health` |
+| application-backend (v2 API) | 8088 | `/healthz` |
 | app-backend (legacy v1 API) | 8003 | `/health` |
-| object-storage-service | 8080 | `/` |
+| case-service | 8005 | `/healthz` |
+| chat-service | 8008 | `/healthz` |
 | events-service | 8001 | `/healthz` |
-| case-service | 8005 | `/` |
-| chat-service | 8008 | `/` |
-| engagement-service | 8010 | `/` |
-| webhook-connector | 8011 | `/` |
-| kafka-ui | 8081 | web UI |
-| llm-service (ML host) | 8000 | `/health` |
-| parser-service (ML host) | 8090 | `/` |
+| engagement-service | 8010 | `/healthz` |
+| webhook-connector | 8011 | `/healthz` |
+
+The remaining platform containers (`event-analyzer`, the `connector-*` ingestion
+services, and the `enrichment-worker-*` consumers) publish no port and have no
+healthcheck — verify them via `docker compose ps` (State column) and their logs.
+
+**Classifier / ML host**
+
+| Component | Port | Check |
+|---|---|---|
+| llm-service | 8000 | `/health` |
+| parser-service | 8090 | `/healthz` |
+| rapidocr | internal only (8829) | `/health` — reachable only from `parser-service` on the compose network |
+| data-classification | internal only (8000) | `/health` — reachable only from `llm-service` on the compose network |
+| fluent-bit-cloudwatch | — | `pidof fluent-bit` (no HTTP check) |
 
 To reach the UI or DocumentDB from your workstation, use SSM port-forwarding
 (the platform stack prints ready-made commands):
 
 ```bash
+# still in axia-deploy/terraform/platform (from §5.3)
 terraform output documentdb_ssm_port_forward_command   # localhost:27017 → DocumentDB
 ```
 
 ---
 
-## 9. Data-source integrations
+## 8. Data-source integrations
 
 Axia ingests external events through **connectors**. This section covers the two
 integrations for this deployment: **Microsoft Purview DLP** (Axia polls Microsoft
 Graph outbound) and **Cursor user-prompt events** (forwarded to Axia's webhook receiver
 by a hook on each developer's machine). Both are additive — configure only what you use.
-All values below go in `client-config.env` (§6.2).
+All values below go in `config.env` (§5.2).
 
-### 9.1 Microsoft Purview DLP
+### 8.1 Microsoft Purview DLP
 
 **How it works.** The `connector-purview` service (the shared `connector` image with
 `CONNECTOR_TYPE=purview`) authenticates to Microsoft with the OAuth2 client-credentials
@@ -501,7 +581,7 @@ GET https://graph.microsoft.com/v1.0/security/alerts_v2?$filter=serviceSource eq
 > You can reuse the **same Entra app as the Outlook connector**: just add the
 > `SecurityAlert.Read.All` permission to it and reuse the same tenant/client/secret.
 
-**Configure the connector** (`client-config.env`):
+**Configure the connector** (`config.env`):
 
 ```bash
 MICROSOFT_TENANT_ID=<tenant-id>
@@ -523,7 +603,7 @@ through `enrichment-worker-dlp` into the events service.
 [client-credentials / `.default`](https://learn.microsoft.com/en-us/graph/auth-v2-service) ·
 [DLP alerts prerequisites & licensing](https://learn.microsoft.com/en-us/purview/dlp-alerts-get-started).
 
-### 9.2 Cursor (user-prompt events)
+### 8.2 Cursor (user-prompt events)
 
 We ingest **only the user-prompt events** — the text developers submit to Cursor's AI —
 for sensitive-data detection.
@@ -548,7 +628,7 @@ receiver, and the HMAC shim that a Cursor-cloud webhook would need does **not** 
 "Enable only the user-prompt events" simply means: declare only the `beforeSubmitPrompt`
 hook and no other hook types.
 
-**Step 1 — register the source on the Axia side** (`client-config.env`):
+**Step 1 — register the source on the Axia side** (`config.env`):
 
 ```bash
 # name:secret pairs, ';'-separated (this is the static X-Webhook-Secret value)
@@ -612,9 +692,9 @@ prompt; `conversation_id` + `generation_id` is the stable composite key.
 
 ---
 
-## 10. Configuration reference
+## 9. Configuration reference
 
-### 10.1 Service & port map
+### 9.1 Service & port map
 
 | Port | Service | Host | Role |
 |---|---|---|---|
@@ -628,7 +708,6 @@ prompt; `conversation_id` + `generation_id` is the stable composite key.
 | 8008 | chat-service | platform | Intel chat (Bedrock agent) |
 | 8010 | engagement-service | platform | Outbound ticketing (Jira/ADO) |
 | 8011 | webhook-connector | platform | Webhook ingest → Kafka |
-| 8004 | connector-api | platform | API ingestion connector |
 | 8081 | kafka-ui | platform | Kafka web UI (internal :8080) |
 | 9092 | kafka | platform | Broker (internal :29092, KRaft) |
 | 6379 | redis | platform | Pub/sub + config-plane listener |
@@ -637,7 +716,7 @@ prompt; `conversation_id` + `generation_id` is the stable composite key.
 | 8829 | rapidocr | ML | OCR backend (internal) |
 | 27017 | DocumentDB | (managed) | MongoDB-compatible datastore |
 
-### 10.2 Container images
+### 9.2 Container images
 
 - **Public:** `confluentinc/cp-kafka:8.1.1`, `ghcr.io/kafbat/kafka-ui:v1.4.2`,
   `redis:7.4-alpine`.
@@ -650,7 +729,7 @@ prompt; `conversation_id` + `generation_id` is the stable composite key.
   provided by Axia). Tags are pinned per release (e.g. `v1.4.0` core / `v1.0.0`
   app-layer); un-pinned entries default to `latest`.
 
-### 10.3 Key environment variables & secrets
+### 9.3 Key environment variables & secrets
 
 Config uses a namespaced convention:
 `SERVICES__ENV__<SERVICE>__<VAR>` (non-secret) and
@@ -666,8 +745,8 @@ Config uses a namespaced convention:
 | Kafka | `KAFKA_BOOTSTRAP_SERVERS`, `KAFKA_SECURITY_PROTOCOL`, `KAFKA_ADVERTISED_HOST` |
 | Cross-host | `PARSER_SERVICE_URL`, `LLM_SERVICE_URL` |
 | Outlook/365 | `MICROSOFT_TENANT_ID`, `MICROSOFT_CLIENT_ID`, `MICROSOFT_CLIENT_SECRET`, `OUTLOOK_ORG_DOMAIN` |
-| Purview DLP (§9.1) | `MICROSOFT_TENANT_ID`, `MICROSOFT_CLIENT_ID`, `MICROSOFT_CLIENT_SECRET`, `PURVIEW_START_DATE`; defaults `MICROSOFT_GRAPH_BASE_URL`, `PURVIEW_PENDING_QUEUE_NAME=dlp.events` |
-| Webhook sources — Cursor (§9.2) | `WEBHOOK_ENRICHMENT_SOURCES` (`cursor:<secret>;…`), `WEBHOOK_ENRICHMENT_TOPIC`, `WEBHOOK_DLP_SOURCES`, `WEBHOOK_DLP_TOPIC`, `WEBHOOK_BATCH_SOURCES`, `WEBHOOK_BATCH_TOPIC` |
+| Purview DLP (§8.1) | `MICROSOFT_TENANT_ID`, `MICROSOFT_CLIENT_ID`, `MICROSOFT_CLIENT_SECRET`, `PURVIEW_START_DATE`; defaults `MICROSOFT_GRAPH_BASE_URL`, `PURVIEW_PENDING_QUEUE_NAME=dlp.events` |
+| Webhook sources — Cursor (§8.2) | `WEBHOOK_ENRICHMENT_SOURCES` (`cursor:<secret>;…`), `WEBHOOK_ENRICHMENT_TOPIC`, `WEBHOOK_DLP_SOURCES`, `WEBHOOK_DLP_TOPIC`, `WEBHOOK_BATCH_SOURCES`, `WEBHOOK_BATCH_TOPIC` |
 | SMTP (optional) | `SMTP_HOST/PORT/SECURE/USER/PASSWORD/FROM_ADDRESS/FROM_NAME` |
 
 In production the DocumentDB password comes from **Secrets Manager** and the S3
@@ -676,15 +755,15 @@ generator, not stored in the repo.
 
 ---
 
-## 11. Operations
+## 10. Operations
 
 - **Connect to a host:** `aws ssm start-session --target <instance-id> --region <region>`
   (or `terraform output ssm_command`). Hosts are in private subnets — there is no SSH.
 - **DocumentDB shell from your laptop:** use `documentdb_ssm_port_forward_command` to
   map `localhost:27017` to the cluster, then connect with a TLS client using the RDS
   CA bundle (`authMechanism=SCRAM-SHA-1`).
-- **Upgrade a service:** update the image tag (via `.env` on the host or the CI
-  `SERVICES_ENV_VARS`), then re-run the deploy (`docker compose pull && up -d`).
+- **Upgrade a service:** update the image tag in `.env` on the host, then re-run the
+  deploy (`docker compose pull && up -d`).
 - **Logs:** `docker compose logs -f <service>` on the host; container logs also ship to
   CloudWatch (`/platform/services`, `/ml`).
 - **Off-hours shutdown:** the platform EC2 can be tagged `shut-down=true` to opt into an
@@ -692,7 +771,7 @@ generator, not stored in the repo.
 
 ---
 
-## 12. Known gotchas & caveats
+## 11. Known gotchas & caveats
 
 1. **Two hosts required.** The platform compose file does not include `llm-service` or
    the parser — those live on the ML host. Both must run and be wired by private-IP
@@ -704,8 +783,8 @@ generator, not stored in the repo.
    or they fail with `NoRegionError`. Verify the exact model id against
    `aws bedrock list-foundation-models` — model-id mismatches are a common failure.
 4. **The image registry points at Axia's ECR** in the generated `deployment-config.json`
-   by design — that is where images are pulled from cross-account (§5), not your account.
-   (The bundled config generator and `deploy.sh` are already path-fixed and correctly
+   by design — that is where images are pulled from cross-account, not your account.
+   (The bundled config generator and `deploy-v2.sh` are already path-fixed and correctly
    named — no edits needed.)
 5. **Region consistency.** Pin one region across the whole deployment — state bucket,
    VPC, DocumentDB, S3, and the deployment config — and set it before you apply.
@@ -714,23 +793,18 @@ generator, not stored in the repo.
 7. **AMI / user_data drift.** The EC2 resources set `ignore_changes = [ami, user_data]`
    so Terraform will not replace a running host on AMI updates. Use targeted applies for
    non-EC2 changes.
-8. **Bootstrap variants differ.** Prefer the CloudFormation bootstrap (creates the OIDC
-   provider the IAM stacks depend on) over the CLI-only variant.
-9. **CI deploy is Axia-managed.** The GitHub Actions deploy path runs from Axia's org;
-   the manual deploy path documented here is the supported route for self-hosted
-   deployments.
-10. **Purview alerts can lag.** New/modified DLP policies take up to ~3 hours to start
-    generating alerts, and app-only reads require `SecurityAlert.Read.All` **with admin
-    consent** — a missing consent looks like "authenticated but zero alerts" (§9.1).
-11. **Cursor has no cloud-side prompt events.** User prompts are captured only via the
+8. **Purview alerts can lag.** New/modified DLP policies take up to ~3 hours to start
+   generating alerts, and app-only reads require `SecurityAlert.Read.All` **with admin
+   consent** — a missing consent looks like "authenticated but zero alerts" (§8.1).
+9. **Cursor has no cloud-side prompt events.** User prompts are captured only via the
     local `beforeSubmitPrompt` hook deployed to each developer endpoint (configure and
     enforce it via MDM for a tamper-resistant fleet-wide rollout). The hook's forwarder script sets
-    `X-Webhook-Secret` itself, so no HMAC shim is needed for this path (§9.2). Capturing
+    `X-Webhook-Secret` itself, so no HMAC shim is needed for this path (§8.2). Capturing
     prompt text is user-input monitoring — treat as a consent/policy matter.
 
 ---
 
-## 13. Bundle contents map
+## 12. Bundle path reference
 
 Everything the phases above reference, and where it lives inside
 `axia-deploy-<version>/`:
@@ -742,14 +816,13 @@ Everything the phases above reference, and where it lives inside
 | Core infra stack (EC2 / DocumentDB / S3 / IAM) | `terraform/platform/` |
 | Host bootstrap script | `terraform/platform/scripts/user_data.sh` |
 | Example env config | `terraform/platform/{example.backend.hcl,example.tfvars}` |
-| Deploy scripts | `terraform/scripts/{generate-deployment-config.sh,deploy.sh,ECR-cross-account-trust.sh}` |
-| Client config template | `client-config.env.template` |
+| Deploy scripts | `scripts/{generate-deployment-config.sh,deploy-v2.sh,encode-mongodb-password.py}` |
+| Client config template | `configs/platform/config.env.example` |
 | Platform host compose | `compose/platform/docker-compose.yml` |
 | ML host compose | `compose/ml/docker-compose.yml` |
 
 Axia-internal references (not shipped): the `apps-ci`/`tenants` Terraform stacks, the
-Terraform source-of-truth map, the CI deploy workflow (`platform-deploy.yml`), and the
-internal deployment-strategy / ports docs.
+Terraform source-of-truth map, and the internal deployment-strategy / ports docs.
 
 ---
 
