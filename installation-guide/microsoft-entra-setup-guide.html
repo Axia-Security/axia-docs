@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Microsoft Entra ID Setup Guide for Axia</title>
+<style>
+  :root {
+    --bg-dark: #1a1a2e;
+    --bg-medium: #16213e;
+    --bg-card: #1f2b4d;
+    --accent-blue: #00b4d8;
+    --accent-teal: #00c9a7;
+    --white: #ffffff;
+    --light-gray: #bbbbcc;
+    --orange: #ff6b35;
+    --red: #ef476f;
+    --green: #06d6a0;
+    --yellow: #ffd166;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg-dark);
+    color: var(--light-gray);
+    line-height: 1.6;
+    padding: 0;
+  }
+  .container { max-width: 900px; margin: 0 auto; padding: 40px 32px; }
+  h1 {
+    font-size: 2.2rem;
+    color: var(--white);
+    margin-bottom: 8px;
+    border-bottom: 3px solid var(--accent-blue);
+    padding-bottom: 12px;
+  }
+  h1 + p { color: var(--accent-blue); font-size: 1.1rem; margin-bottom: 32px; }
+  h2 {
+    font-size: 1.5rem;
+    color: var(--white);
+    margin-top: 48px;
+    margin-bottom: 16px;
+    padding-left: 12px;
+    border-left: 4px solid var(--accent-blue);
+  }
+  h3 {
+    font-size: 1.15rem;
+    color: var(--accent-teal);
+    margin-top: 24px;
+    margin-bottom: 10px;
+  }
+  p { margin-bottom: 12px; }
+  ol, ul { margin-left: 24px; margin-bottom: 16px; }
+  li { margin-bottom: 6px; }
+  a { color: var(--accent-blue); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  strong { color: var(--white); }
+  code {
+    background: var(--bg-medium);
+    color: var(--accent-teal);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.92em;
+    font-family: 'Cascadia Code', 'Fira Code', Consolas, monospace;
+  }
+  pre {
+    background: var(--bg-medium);
+    border: 1px solid #2a3a5c;
+    border-radius: 8px;
+    padding: 16px 20px;
+    overflow-x: auto;
+    margin-bottom: 16px;
+    font-size: 0.88rem;
+    line-height: 1.5;
+  }
+  pre code { background: none; padding: 0; color: var(--light-gray); }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    font-size: 0.92rem;
+  }
+  th {
+    background: #0d476e;
+    color: var(--white);
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 600;
+  }
+  td {
+    padding: 10px 14px;
+    border-bottom: 1px solid #2a3a5c;
+  }
+  tr:nth-child(even) td { background: var(--bg-medium); }
+  tr:nth-child(odd) td { background: var(--bg-card); }
+  .card {
+    background: var(--bg-medium);
+    border: 1px solid #2a3a5c;
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+  }
+  .card.warning {
+    border-color: var(--orange);
+    background: #2d1a0f;
+  }
+  .card.success {
+    border-color: var(--green);
+    background: #0a2a1f;
+  }
+  .card.info {
+    border-color: var(--accent-blue);
+  }
+  .card-title {
+    color: var(--white);
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .env-block {
+    background: #0d1b2a;
+    border: 2px solid var(--accent-blue);
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin: 20px 0;
+  }
+  .env-block h3 { color: var(--accent-blue); margin-top: 0; }
+  .checklist { list-style: none; margin-left: 0; }
+  .checklist li {
+    padding: 8px 0 8px 28px;
+    position: relative;
+  }
+  .checklist li::before {
+    content: '\2610';
+    position: absolute;
+    left: 0;
+    color: var(--accent-blue);
+    font-size: 1.1em;
+  }
+  .step-num {
+    display: inline-block;
+    width: 32px;
+    height: 32px;
+    background: var(--accent-blue);
+    color: var(--bg-dark);
+    border-radius: 50%;
+    text-align: center;
+    line-height: 32px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+  hr {
+    border: none;
+    border-top: 1px solid #2a3a5c;
+    margin: 40px 0;
+  }
+  @media print {
+    body { background: #fff; color: #333; }
+    .container { max-width: 100%; }
+    h1 { color: #111; border-color: #0078d4; }
+    h2 { color: #111; border-color: #0078d4; }
+    h3 { color: #0078d4; }
+    code { background: #f0f0f0; color: #0078d4; }
+    pre { background: #f5f5f5; border-color: #ddd; }
+    pre code { color: #333; }
+    th { background: #0078d4; }
+    td { border-color: #ddd; }
+    tr:nth-child(even) td { background: #f9f9f9; }
+    tr:nth-child(odd) td { background: #fff; }
+    .card { border-color: #ddd; background: #f9f9f9; }
+    .card.warning { border-color: #e67e22; background: #fef5ec; }
+    .card.success { border-color: #27ae60; background: #eafaf1; }
+    .env-block { border-color: #0078d4; background: #f0f7ff; }
+    strong { color: #111; }
+    a { color: #0078d4; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>Microsoft Entra ID Setup Guide</h1>
+<p>Configure your Microsoft 365 tenant so Axia can monitor Outlook emails and Teams messages for DLP analysis.</p>
+
+<div class="card info">
+  <div class="card-title">What you'll have at the end</div>
+  <p>Four values from your Microsoft Entra ID configuration that the Axia team needs to connect to your tenant: <strong>Directory (tenant) ID</strong>, <strong>Application (client) ID</strong>, <strong>Client Secret Value</strong>, and your <strong>Primary domain</strong>.</p>
+</div>
+
+<h2>Prerequisites</h2>
+<ul>
+  <li>A Microsoft 365 tenant with an active subscription (Business Basic or higher)</li>
+  <li><strong>Global Administrator</strong> or <strong>Application Administrator</strong> role in Entra ID</li>
+  <li>Access to the <a href="https://portal.azure.com">Azure Portal</a></li>
+</ul>
+
+<hr>
+
+<h2><span class="step-num">1</span> Register the Application</h2>
+
+<ol>
+  <li>Sign in to the <a href="https://portal.azure.com">Azure Portal</a>.</li>
+  <li>Navigate to <strong>Microsoft Entra ID</strong> &gt; <strong>App registrations</strong>.</li>
+  <li>Click <strong>+ New registration</strong>.</li>
+  <li>Fill in the form:
+    <ul>
+      <li><strong>Name</strong>: <code>Axia Security</code></li>
+      <li><strong>Supported account types</strong>: <em>Accounts in this organizational directory only (Single tenant)</em></li>
+      <li><strong>Redirect URI</strong>: Leave blank</li>
+    </ul>
+  </li>
+  <li>Click <strong>Register</strong>.</li>
+</ol>
+
+<p>After registration, copy these values from the <strong>Overview</strong> page:</p>
+
+<table>
+  <tr><th>Value to copy</th><th>Where to find it</th></tr>
+  <tr><td><strong>Application (client) ID</strong></td><td>Overview page, top section</td></tr>
+  <tr><td><strong>Directory (tenant) ID</strong></td><td>Overview page, top section</td></tr>
+</table>
+
+<hr>
+
+<h2><span class="step-num">2</span> Create a Client Secret</h2>
+
+<ol>
+  <li>In the app registration, go to <strong>Certificates &amp; secrets</strong> &gt; <strong>Client secrets</strong>.</li>
+  <li>Click <strong>+ New client secret</strong>.</li>
+  <li>Enter a description (e.g., <code>Axia production</code>) and choose an expiry (recommended: 24 months).</li>
+  <li>Click <strong>Add</strong>.</li>
+  <li><strong>Immediately copy the Value column.</strong></li>
+</ol>
+
+<table>
+  <tr><th>Value to copy</th></tr>
+  <tr><td><strong>Secret Value</strong> (the long string — not the Secret ID)</td></tr>
+</table>
+
+<div class="card warning">
+  <div class="card-title">Important</div>
+  <p>Copy the <strong>Value</strong>, not the <strong>Secret ID</strong>. The Secret ID is a UUID that identifies the secret &mdash; it cannot be used for authentication. The Value is only shown once.</p>
+</div>
+
+<hr>
+
+<h2><span class="step-num">3</span> Grant API Permissions</h2>
+
+<p>Axia uses Microsoft Graph API with <strong>application permissions</strong> (no user sign-in required).</p>
+
+<ol>
+  <li>In the app registration, go to <strong>API permissions</strong>.</li>
+  <li>Click <strong>+ Add a permission</strong> &gt; <strong>Microsoft Graph</strong> &gt; <strong>Application permissions</strong>.</li>
+  <li>Add the permissions listed below based on which connectors you enable.</li>
+</ol>
+
+<h3>Required for Outlook email monitoring</h3>
+<table>
+  <tr><th>Permission</th><th>Purpose</th></tr>
+  <tr><td><code>Mail.Read</code></td><td>Read emails from monitored mailboxes</td></tr>
+  <tr><td><code>User.Read.All</code></td><td>Resolve user IDs and email addresses</td></tr>
+</table>
+
+<h3>Required for Teams message monitoring (if enabled)</h3>
+<table>
+  <tr><th>Permission</th><th>Purpose</th></tr>
+  <tr><td><code>ChannelMessage.Read.All</code></td><td>Read messages from Teams channels</td></tr>
+  <tr><td><code>Chat.Read.All</code></td><td>Read messages from 1:1 and group chats</td></tr>
+  <tr><td><code>User.Read.All</code></td><td>Resolve user IDs and display names</td></tr>
+</table>
+
+<h3>Required for OneDrive/SharePoint file scanning (if enabled)</h3>
+<table>
+  <tr><th>Permission</th><th>Purpose</th></tr>
+  <tr><td><code>Files.Read.All</code></td><td>Download files shared via OneDrive/SharePoint links in emails</td></tr>
+</table>
+
+<ol start="4">
+  <li>After adding all needed permissions, click <strong>Grant admin consent for [Your Organization]</strong>.</li>
+  <li>Confirm by clicking <strong>Yes</strong>.</li>
+  <li>Verify that every permission shows a green checkmark under <strong>Status</strong>.</li>
+</ol>
+
+<div class="card warning">
+  <div class="card-title">Admin consent is required</div>
+  <p>Without admin consent, the application will receive <code>403 Forbidden</code> errors when calling the Graph API.</p>
+</div>
+
+<hr>
+
+<h2><span class="step-num">4</span> Identify Your Organization Domain</h2>
+
+<p>Axia uses the organization domain to distinguish internal recipients from external recipients. Only emails sent to external recipients are analyzed.</p>
+
+<ol>
+  <li>In the Azure Portal, go to <strong>Microsoft Entra ID</strong> &gt; <strong>Custom domain names</strong>.</li>
+  <li>Look for the domain marked as <strong>Primary</strong>.</li>
+</ol>
+
+<table>
+  <tr><th>Value to copy</th></tr>
+  <tr><td><strong>Primary domain</strong> (e.g., <code>yourcompany.com</code>)</td></tr>
+</table>
+
+<hr>
+
+<h2><span class="step-num">5</span> Provide Credentials to Axia</h2>
+
+<p>Collect all the values from the previous steps and provide them to your Axia deployment team.</p>
+
+<h3>Values to provide</h3>
+<table>
+  <tr><th>#</th><th>Value</th><th>Where you copied it from</th><th>Example</th></tr>
+  <tr><td>1</td><td><strong>Directory (tenant) ID</strong></td><td>Step 1 &mdash; App registration Overview page</td><td><code>a1b2c3d4-e5f6-7890-abcd-ef1234567890</code></td></tr>
+  <tr><td>2</td><td><strong>Application (client) ID</strong></td><td>Step 1 &mdash; App registration Overview page</td><td><code>12345678-abcd-ef01-2345-6789abcdef01</code></td></tr>
+  <tr><td>3</td><td><strong>Client Secret Value</strong></td><td>Step 2 &mdash; Certificates &amp; secrets</td><td><code>Abc8Q~xYz...</code></td></tr>
+  <tr><td>4</td><td><strong>Primary domain</strong></td><td>Step 4 &mdash; Custom domain names</td><td><code>yourcompany.com</code></td></tr>
+</table>
+
+<div class="card warning">
+  <div class="card-title">Security</div>
+  <p>Share these values through a secure channel (e.g., a password manager or encrypted message). Never send them in plain-text email.</p>
+</div>
+
+<hr>
+
+<h2>Verification Checklist</h2>
+
+<ul class="checklist">
+  <li>App registration exists in Microsoft Entra ID</li>
+  <li><strong>Application (client) ID</strong> and <strong>Directory (tenant) ID</strong> copied from Overview page</li>
+  <li><strong>Client Secret Value</strong> is the secret <strong>Value</strong> (not the Secret ID)</li>
+  <li>API permissions added (at minimum: <code>Mail.Read</code>, <code>User.Read.All</code>)</li>
+  <li><strong>Admin consent is granted</strong> (green checkmarks on all permissions)</li>
+  <li><strong>Primary domain</strong> matches your primary email domain</li>
+</ul>
+
+<hr>
+
+</div>
+</body>
+</html>
