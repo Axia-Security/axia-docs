@@ -325,6 +325,26 @@
 
 <hr>
 
+<h2><span class="step-num">6</span> Set Up the Engagement Mailbox</h2>
+
+<p>Axia sends case emails (to the employee, manager, Legal or HR, and release requests) from this mailbox. It uses its own app registration, separate from Steps 1&ndash;3.</p>
+
+<ol>
+  <li>Create a dedicated mailbox for Axia (e.g., <code>axia-review@yourcompany.com</code>), not a person's mailbox. Axia never scans it.</li>
+  <li>Register a second application (e.g., <code>Axia Engagement</code>) and create a client secret for it, as in Steps 1&ndash;2.</li>
+  <li>In its <strong>API permissions</strong>, add the application permissions <strong>Office 365 Exchange Online</strong> &gt; <code>SMTP.SendAsApp</code> and <strong>Microsoft Graph</strong> &gt; <code>Mail.ReadWrite</code>, then click <strong>Grant admin consent</strong>.</li>
+  <li>In Exchange Online PowerShell, limit the application to that mailbox and turn on SMTP AUTH:
+<pre><code>New-ServicePrincipal -AppId &lt;client-id&gt; -ObjectId &lt;enterprise-app-object-id&gt;
+Add-MailboxPermission -Identity &lt;mailbox&gt; -User &lt;client-id&gt; -AccessRights FullAccess
+Add-RecipientPermission -Identity &lt;mailbox&gt; -Trustee &lt;client-id&gt; -AccessRights SendAs
+New-ApplicationAccessPolicy -AppId &lt;client-id&gt; -PolicyScopeGroupId &lt;group-containing-the-mailbox&gt; -AccessRight RestrictAccess
+Set-CASMailbox -Identity &lt;mailbox&gt; -SmtpClientAuthenticationDisabled $false</code></pre>
+  </li>
+  <li>In Axia, go to <strong>Connect</strong> &gt; <strong>Microsoft 365</strong> &gt; <strong>Engagement mailbox</strong>, enter the address, client ID and secret, click <strong>Test</strong>, then <strong>Save mailbox</strong>.</li>
+</ol>
+
+<hr>
+
 <h2>Verification Checklist</h2>
 
 <ul class="checklist">
@@ -334,6 +354,7 @@
   <li>API permissions added (at minimum: <code>Mail.Read</code>, <code>User.Read.All</code>)</li>
   <li><strong>Admin consent is granted</strong> (green checkmarks on all permissions)</li>
   <li><strong>Primary domain</strong> matches your primary email domain</li>
+  <li>Engagement mailbox saved and its <strong>Test</strong> passed in Axia</li>
 </ul>
 
 <hr>
