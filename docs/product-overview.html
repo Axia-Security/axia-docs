@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Product overview & system boundaries — Axia Security Help Center</title><meta name="description" content="What Axia Security does, how data flows through the platform, and who is responsible for what.">
+<link rel="stylesheet" href="assets/help.css"></head>
+<body><header class="top"><div class="bar"><a class="brand" href="index.html">Axia Security <span>Help Center</span></a><nav><a href="product-overview.html" class=on>Product overview</a><a href="user-guide.html">User guide</a><a href="faq.html">FAQ</a><a href="support.html">Support</a><a href="deployment-guide.html">Deployment guide</a></nav></div>
+<div class="hero"><h1>Product overview & system boundaries</h1><p>What Axia Security does, how data flows through the platform, and who is responsible for what.</p></div></header>
+<main><div class="doc">
+<h2>What Axia Security does</h2>
+<p>Axia Security is a data-security platform that watches the channels where your people work, such as email, chat, collaboration tools and AI coding agents. It detects when sensitive or confidential information is shared in a risky way, explains why it matters, and helps your team respond.</p>
+<p>Axia combines your existing DLP signals with its own AI analysis. The aim is fewer false alerts and clearer, actionable cases for the people who handle them.</p>
+
+<h2>Main capabilities</h2>
+<table><tr><th>Capability</th><th>What it gives you</th></tr>
+<tr><td>Connect</td><td>Connect email, chat, DLP, ticketing and AI coding tools with guided setup.</td></tr>
+<tr><td>Detect &amp; analyse</td><td>Events are enriched and classified. AI analysis decides whether sensitive data was exposed, how severe it is, and why.</td></tr>
+<tr><td>Cases</td><td>Findings become cases with severity, status, owner, timeline and recommendations. Teams investigate and close them with a documented reason.</td></tr>
+<tr><td>Command &amp; Insights</td><td>A risk command centre, plus posture and operations metrics: alerts vs. true cases, time to resolve, top case types and departments.</td></tr>
+<tr><td>Intel</td><td>A conversational AI advisor for asking questions about cases and risk in plain language.</td></tr>
+<tr><td>Act &amp; Enforce</td><td>Choose which response actions Axia may take (for example coaching the user, holding a message or revoking a share link). Express your policies in plain language.</td></tr>
+<tr><td>Ticketing</td><td>Create and track tickets for cases in Jira or Azure DevOps.</td></tr>
+</table>
+<p>Some capabilities are switched on per workspace. If you don't see a page described here, ask your Axia contact.</p>
+
+<h2>How data flows</h2>
+<ol>
+<li><b>Ingest.</b> Connected sources send events to Axia, using the access your administrator approved during setup. Examples: a Microsoft Purview DLP alert, an email, an AI coding agent prompt.</li>
+<li><b>Enrich &amp; classify.</b> Axia extracts the relevant content and context, for example organization relations and guidance documents you uploaded.</li>
+<li><b>Analyse.</b> AI models assess whether sensitive information was exposed and how severe it is. Models are accessed through Amazon Bedrock.</li>
+<li><b>Case.</b> Relevant findings become cases in the Axia web application.</li>
+<li><b>Respond.</b> Your team investigates, assigns, opens tickets and takes the response actions your administrator allowed.</li>
+</ol>
+
+<h2>System boundaries</h2>
+<h3>Deployment models</h3>
+<table><tr><th>Model</th><th>Where it runs</th></tr>
+<tr><td>Self-hosted / dedicated</td><td>In a dedicated AWS account (customer-owned, or Axia-managed for one customer), deployed with Terraform. See the <a href="deployment-guide.html">Deployment guide</a>.</td></tr>
+<tr><td>Axia-hosted</td><td>In Axia's AWS environment, managed by Axia.</td></tr>
+</table>
+<h3>In scope of the Axia platform</h3>
+<ul>
+<li>The Axia web application and API, including sign-in, roles, cases, Intel, Act, Enforce, Connect, Users and Settings.</li>
+<li>The processing services that ingest, enrich, classify and analyse events.</li>
+<li>Axia's own databases, object storage and queues in the deployment's AWS account and region.</li>
+</ul>
+<h3>Outside the Axia platform</h3>
+<ul>
+<li>Your source systems: Microsoft 365, Google Workspace, DLP tools, AI coding agents. Your identity provider (Microsoft Entra ID or Google Workspace), and your ticketing systems.</li>
+<li>Users' devices and browsers.</li>
+<li>For self-hosted deployments: the customer's AWS account, networking and account-level controls.</li>
+</ul>
+
+<h2>Shared responsibilities</h2>
+<table><tr><th>Area</th><th>Axia Security</th><th>Your organization</th></tr>
+<tr><td>Application security</td><td>Secure development, vulnerability management, penetration testing, fixes and updates</td><td>Keeping your deployment updated to supported versions (self-hosted)</td></tr>
+<tr><td>Access</td><td>Roles, encrypted sessions, single sign-on support, hashed password storage</td><td>Deciding who gets access and which role; removing leavers; enforcing MFA in your identity provider</td></tr>
+<tr><td>Integrations</td><td>Requesting only the permissions each connector needs; protecting stored connector credentials</td><td>Approving consents in your tenant; rotating or revoking credentials you issued</td></tr>
+<tr><td>Data</td><td>Encryption in transit (TLS) and at rest; processing only for the service</td><td>Choosing which sources to connect; data-retention decisions for your environment</td></tr>
+<tr><td>Infrastructure</td><td>Axia-hosted: operations, monitoring, backups</td><td>Self-hosted: the AWS account, network, backups and account-level security</td></tr>
+</table>
+</div></main>
+<footer><div class="bar">© Axia Security Ltd. · Last updated 21 October 2026 · Questions? See <a href="support.html">Support</a>.</div></footer></body></html>

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>User guide — Axia Security Help Center</title><meta name="description" content="How to sign in, work cases, connect your tools and configure Axia Security.">
+<link rel="stylesheet" href="assets/help.css"></head>
+<body><header class="top"><div class="bar"><a class="brand" href="index.html">Axia Security <span>Help Center</span></a><nav><a href="product-overview.html">Product overview</a><a href="user-guide.html" class=on>User guide</a><a href="faq.html">FAQ</a><a href="support.html">Support</a><a href="deployment-guide.html">Deployment guide</a></nav></div>
+<div class="hero"><h1>User guide</h1><p>How to sign in, work cases, connect your tools and configure Axia Security.</p></div></header>
+<main><div class="doc">
+<h2>Signing in</h2>
+<ul>
+<li><b>Email and password.</b> Use the credentials your administrator created for you.</li>
+<li><b>Single sign-on.</b> Choose <i>Sign in with Microsoft</i> (Microsoft Entra ID) or <i>Sign in with Google</i> (Google Workspace), if your administrator enabled it. The first time you sign in with SSO, an account is created for you with the <b>Viewer</b> role, and an administrator can then change your role.</li>
+<li><b>Sessions</b> last up to 8 hours. You are signed out automatically if an administrator removes your account or changes your password, email or role.</li>
+<li><b>Forgot your password?</b> Ask your Axia administrator to set a new one under <i>Users</i>.</li>
+</ul>
+
+<h2>Roles</h2>
+<table><tr><th>Role</th><th>Can do</th></tr>
+<tr><td>Viewer</td><td>View the command centre and cases (read-only).</td></tr>
+<tr><td>Analyst</td><td>Everything a Viewer can, plus working cases: assign, change status, close and reopen, open tickets, approve analyses, review actions.</td></tr>
+<tr><td>Admin</td><td>Everything an Analyst can, plus Connect, Users, Act, Enforce, Insights and Settings. Admins manage users in their own organization.</td></tr>
+</table>
+
+<h2>Monitor</h2>
+<h3>Command</h3>
+<p>The <b>Risk Command Center</b> is the landing page. It shows total DLP alarms, how many were alerted, false alerts, Axia cases, and a summary by severity. Use the time selector to change the period.</p>
+<h3>Cases</h3>
+<p>The <b>Investigation Workbench</b> lists all cases.</p>
+<ul>
+<li><b>Search:</b> by keyword, or describe what you're looking for and let AI search find it.</li>
+<li><b>Filter:</b> by severity, status, department, entity, escalation, assignee and type.</li>
+<li><b>Bulk actions:</b> select several cases to assign or close them together.</li>
+</ul>
+<p>Open a case to see:</p>
+<ul><li>what happened and why Axia flagged it;</li><li>the analysis and the source messages;</li><li>the timeline and engagement thread;</li><li>recommendations, and the available actions.</li></ul>
+<p>Cases have a <b>severity</b> (Critical, High, Medium, Low or Not sensitive) and a <b>status</b> (Open, In Progress or Closed).</p>
+<p>Closing a case requires a reason:</p>
+<ul><li>real risk, handled;</li><li>real risk, accepted by the business;</li><li>not a risk;</li><li>duplicate;</li><li>not enough information.</li></ul>
+<p>You can reopen a closed case by giving a reason.</p>
+<h3>Insights</h3>
+<p>For administrators: overall posture, risk control score, mean time to resolve, alerts vs. true cases, top case types, departments and severity trends.</p>
+
+<h2>Respond</h2>
+<h3>Working a case</h3>
+<ul><li>Assign it to yourself or a colleague.</li><li>Approve or decline Axia's analysis, or its proposal to close the case.</li><li>Create a <b>Jira</b> or <b>Azure DevOps</b> ticket and refresh its status.</li><li>Review and approve drafted actions and communications.</li><li>Where your administrator allowed it, release a held email or revoke a share link.</li><li>Download the original message or file for your investigation.</li></ul>
+<h3>Intel</h3>
+<p>Ask the conversational AI advisor questions in plain language, on its own or in the context of a case. You can attach a document for it to review, and rename or delete conversations.</p>
+<h3>Act (administrators)</h3>
+<p>Choose which response actions Axia may take or propose:</p>
+<ul><li><b>Content actions:</b> hold a message, quarantine an attachment, remove a message, revoke a share link, release an email.</li><li><b>Engagement actions:</b> send an email, coach the person, tell the manager, escalate to Legal or HR.</li></ul>
+<p>Content actions start disabled until you enable them.</p>
+<h3>Enforce (administrators)</h3>
+<p>Write your data-handling policies in plain language, one sentence each. Axia takes them into account in its analysis.</p>
+
+<h2>Setup (administrators)</h2>
+<h3>Connect</h3>
+<p>Open <b>Connect</b> and choose a tool from the <i>Available</i> tab. Follow the guided setup, then check it appears as <i>Healthy</i> on the <i>Connected</i> tab. Currently available:</p>
+<ul><li><b>Microsoft 365:</b> sign in once, then choose Outlook, Teams and/or Purview DLP.</li><li><b>Google Workspace:</b> Gmail.</li><li><b>Jira and Azure DevOps:</b> ticketing, with field mapping.</li><li><b>Claude Code and Cursor:</b> AI coding agents.</li></ul>
+<p>More connectors are listed as <i>Coming soon</i>.</p>
+<h3>Users</h3>
+<ul><li><b>Add a user:</b> enter name, email and role. Set a password, or choose <i>Single sign-on only</i>.</li><li><b>Manage users:</b> edit details or role, change a password, or remove a user.</li></ul>
+<p>Remove leavers promptly.</p>
+<h3>Settings</h3>
+<ul><li><b>Guidance documents:</b> organizational guidance Axia uses in its analysis.</li><li><b>Employee directory:</b> organization relations, such as managers and departments.</li><li><b>Automation:</b> engagement automation settings.</li></ul>
+</div></main>
+<footer><div class="bar">© Axia Security Ltd. · Last updated 21 October 2026 · Questions? See <a href="support.html">Support</a>.</div></footer></body></html>
