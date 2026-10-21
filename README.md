@@ -9,6 +9,7 @@ GitHub Pages at https://axia-security.github.io/axia-docs/ from `docs/`.
 - **Product overview & system boundaries**: `docs/product-overview.html`
 - **User guide**: `docs/user-guide.html`
 - **FAQ**: `docs/faq.html`
+- **Release notes**: `docs/release-notes.html`
 - **Support**: `docs/support.html`
 - **Deployment guide**: Terraform self-host deployment (`docs/deployment-guide.html`,
   source `docs/installation-guide.md`)
