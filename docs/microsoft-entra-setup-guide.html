@@ -327,7 +327,8 @@
 
 <h2><span class="step-num">6</span> Set Up the Engagement Mailbox</h2>
 
-<p>Axia sends case emails (to the employee, manager, Legal or HR, and release requests) from this mailbox. It uses its own app registration, separate from Steps 1&ndash;3.</p>
+<p>Axia sends case emails (to the employee, manager, Legal or HR, and release requests) from this mailbox, and reads the replies that arrive in it. It uses its own app registration, separate from Steps 1&ndash;3.</p>
+<p>If your organization runs a DLP policy that quarantines mail (for example in Microsoft Purview), exclude this mailbox from it. A reply that quotes Axia's email can otherwise be quarantined before it arrives, and Axia never sees it.</p>
 
 <ol>
   <li>Create a dedicated mailbox for Axia (e.g., <code>axia-review@yourcompany.com</code>), not a person's mailbox. Axia never scans it.</li>
@@ -355,6 +356,7 @@ Set-CASMailbox -Identity &lt;mailbox&gt; -SmtpClientAuthenticationDisabled $fals
   <li><strong>Admin consent is granted</strong> (green checkmarks on all permissions)</li>
   <li><strong>Primary domain</strong> matches your primary email domain</li>
   <li>Engagement mailbox saved and its <strong>Test</strong> passed in Axia</li>
+  <li>Engagement mailbox excluded from any DLP policy that quarantines mail</li>
 </ul>
 
 <hr>
