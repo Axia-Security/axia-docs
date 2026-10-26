@@ -252,7 +252,7 @@
 <ol>
   <li>In the app registration, go to <strong>API permissions</strong>.</li>
   <li>Click <strong>+ Add a permission</strong> &gt; <strong>Microsoft Graph</strong> &gt; <strong>Application permissions</strong>.</li>
-  <li>Add the permissions listed below based on which connectors you enable.</li>
+  <li>Add the permissions listed below for each Microsoft service you plan to enable in Axia (Outlook, Teams, Purview DLP). One app registration can serve all three.</li>
 </ol>
 
 <h3>Microsoft Outlook (email monitoring)</h3>
@@ -273,6 +273,13 @@
   <tr><td><code>User.Read.All</code></td><td>Yes</td><td>Listing the users to monitor</td></tr>
   <tr><td><code>Files.Read.All</code></td><td>Optional</td><td>Downloading files attached to chat messages (stored in OneDrive and SharePoint). Links posted in chats are not followed.</td></tr>
 </table>
+
+<h3>Microsoft Purview DLP (DLP alerts, if enabled)</h3>
+<table>
+  <tr><th>Permission</th><th>Required</th><th>Purpose</th></tr>
+  <tr><td><code>SecurityAlert.Read.All</code></td><td>Yes</td><td>Reading Purview DLP alerts</td></tr>
+</table>
+<p>Axia doesn't check this permission when you connect. If it's missing or not consented, Purview DLP still connects but receives no alerts. New or changed DLP policies can take up to about 3 hours to start generating alerts.</p>
 
 <ol start="4">
   <li>After adding all needed permissions, click <strong>Grant admin consent for [Your Organization]</strong>.</li>
@@ -307,10 +314,12 @@
 
 <p>Enter the values from the previous steps directly in the Axia app. You don't need to send them to anyone.</p>
 
+<p>Outlook, Teams and Purview DLP share one app registration, so Axia connects them together from a single <strong>Microsoft 365</strong> card. You enter the credentials once and choose which services to enable.</p>
+
 <ol>
   <li>Sign in to the Axia app and go to <strong>Setup</strong> &gt; <strong>Connect</strong>.</li>
-  <li>Open the <strong>Available</strong> tab and find <strong>Microsoft Outlook</strong> under <strong>Email &amp; Chat</strong>.</li>
-  <li>Fill in the connection fields:</li>
+  <li>On the <strong>Available</strong> tab, open the <strong>Microsoft 365</strong> card under <strong>SaaS Applications</strong>.</li>
+  <li>Enter the shared credentials:</li>
 </ol>
 
 <table>
@@ -318,20 +327,25 @@
   <tr><td><strong>Tenant ID</strong></td><td>Directory (tenant) ID</td><td>Step 1 &mdash; Overview page</td></tr>
   <tr><td><strong>Client ID</strong></td><td>Application (client) ID</td><td>Step 1 &mdash; Overview page</td></tr>
   <tr><td><strong>Client Secret</strong></td><td>Client Secret Value</td><td>Step 2 &mdash; Certificates &amp; secrets</td></tr>
-  <tr><td><strong>Organization Domain</strong></td><td>Primary domain, e.g. <code>yourcompany.com</code></td><td>Step 4 &mdash; Custom domain names</td></tr>
 </table>
 
 <ol start="4">
+  <li>Choose the services to enable. <strong>Outlook</strong>, <strong>Teams</strong> and <strong>Purview DLP</strong> are all selected by default. <strong>Turn off any service whose permissions you didn't grant in Step 3.</strong></li>
+  <li>Enter your <strong>Organization Domain</strong>, the primary domain from Step 4 (for example <code>yourcompany.com</code>). The field is always shown and is required.</li>
   <li>Optionally, turn on <strong>Scan Inbound Emails</strong> to analyze incoming mail too.</li>
-  <li>Click <strong>Test &amp; Connect</strong>. Axia checks the credentials against your tenant before saving them.</li>
-  <li>To monitor Teams, repeat these steps for <strong>Microsoft Teams</strong> with the same Tenant ID, Client ID and Client Secret.</li>
+  <li>Click <strong>Test &amp; Connect</strong>. Axia checks the credentials and the required permissions for each selected service before saving.</li>
 </ol>
 
-<p>After you connect, the connector card on the <strong>Connected</strong> tab shows its status (for example <strong>Healthy</strong>). Expand <strong>Permissions</strong> on the card to see which Graph permissions Axia has confirmed as <strong>Granted</strong>.</p>
+<div class="card warning">
+  <div class="card-title">"Partially connected"</div>
+  <p>Each selected service is checked separately. If some connect and others fail, for example Teams without <code>Team.ReadBasic.All</code>, the result is <strong>Partially connected</strong>, and the error names the missing permissions. The services that passed stay connected. Grant the missing permissions with admin consent (Step 3), then connect the failed service again.</p>
+</div>
+
+<p>After you connect, each enabled service has its own card on the <strong>Connected</strong> tab showing its status (for example <strong>Healthy</strong>). Expand <strong>Permissions</strong> on a card to see which Graph permissions Axia has confirmed as <strong>Granted</strong>.</p>
 
 <div class="card warning">
   <div class="card-title">Keep the secret in Axia</div>
-  <p>Paste the Client Secret Value straight into Axia. Don't send it by email or chat. To rotate it later, open the connector with <strong>Manage</strong> and enter the new value. Leave the field blank to keep the current secret.</p>
+  <p>Paste the Client Secret Value straight into Axia. Don't send it by email or chat. The secret expires on the date you chose in Step 2. Changing it from the Axia app isn't supported yet for Microsoft connections, so contact your Axia deployment team before the secret expires.</p>
 </div>
 
 <hr>
@@ -342,10 +356,11 @@
   <li>App registration exists in Microsoft Entra ID</li>
   <li><strong>Application (client) ID</strong> and <strong>Directory (tenant) ID</strong> copied from Overview page</li>
   <li><strong>Client Secret Value</strong> is the secret <strong>Value</strong> (not the Secret ID)</li>
-  <li>API permissions added (at minimum: <code>Mail.Read</code>, <code>User.Read.All</code>)</li>
+  <li>Every required permission from Step 3 is added for each service you enabled: Outlook <code>Mail.Read</code>, <code>User.Read.All</code>; Teams <code>Chat.Read.All</code>, <code>ChannelMessage.Read.All</code>, <code>Team.ReadBasic.All</code>, <code>Channel.ReadBasic.All</code>, <code>User.Read.All</code>; Purview DLP <code>SecurityAlert.Read.All</code></li>
   <li><strong>Admin consent is granted</strong> (green checkmarks on all permissions)</li>
+  <li>Only services with granted permissions are selected on the <strong>Microsoft 365</strong> card</li>
   <li><strong>Organization Domain</strong> in Axia matches your primary email domain</li>
-  <li>The <strong>Microsoft Outlook</strong> card in Axia shows <strong>Healthy</strong>, and every required permission shows <strong>Granted</strong></li>
+  <li>Every enabled Microsoft service (Outlook, Teams, Purview DLP) shows <strong>Healthy</strong> on the <strong>Connected</strong> tab, and all its required permissions show <strong>Granted</strong></li>
 </ul>
 
 <hr>
