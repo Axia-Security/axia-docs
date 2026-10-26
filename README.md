@@ -14,6 +14,7 @@ GitHub Pages at https://axia-security.github.io/axia-docs/ from `docs/`.
 - **Deployment guide**: Terraform self-host deployment (`docs/deployment-guide.html`,
   source `docs/installation-guide.md`)
 - **Microsoft Entra setup guide**: `docs/microsoft-entra-setup-guide.html`
+- **Slack setup guide**: `docs/slack-setup-guide.html`
 
 Shared styling: `docs/assets/help.css`.
 
