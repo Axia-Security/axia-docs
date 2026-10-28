@@ -12,7 +12,7 @@
 <h2 id="what-axia-does">What Axia Security does in Slack</h2>
 <p>Axia Security reads the messages in the Slack channels you add its app to, and the name, type and size of files shared there — nothing else. File contents are not read yet, and it does not read direct messages or any other channel.</p>
 <p>Axia Security never posts, reacts or changes anything in Slack.</p>
-<p>Reading starts once Slack has verified the events address (step 6) and the app is in a channel (step 7). It stops when you remove the Slack connection on the Connect screen.</p>
+<p>Reading starts once Slack has verified the events address (step 6, shown after you connect) and the app is in a channel (step 7). It stops when you remove the Slack connection on the Connect screen.</p>
 
 <h2 id="permissions">Why the app asks for each permission</h2>
 <p>The manifest asks for these seven read permissions and nothing else. Connect checks that the app has each of them.</p>
@@ -30,10 +30,10 @@
 <h2 id="set-up">Set up the Axia Security app in Slack</h2>
 
 <h3>1. Get the Axia Security app manifest</h3>
-<p>On the Connect screen, select <b>Copy manifest</b> or <b>Download manifest</b>. If your browser does not allow the copy, download the manifest instead. Keep the Connect window open: you paste the credentials into it in step 5.</p>
+<p>On the Connect screen, select <b>Copy manifest</b> or <b>Download manifest</b>. If your browser does not allow the copy, download the manifest instead. If you download it, you paste the file's contents on Slack's YAML tab in step 2. Keep the Connect window open: you paste the credentials into it in step 5.</p>
 
 <h3>2. Create the app in Slack from the manifest</h3>
-<p>Open <a href="https://api.slack.com/apps" target="_blank" rel="noopener noreferrer">api.slack.com/apps</a> and select <b>Create an App</b> → <b>From a manifest</b> → <b>Continue</b>. On the next screen choose the <b>YAML</b> tab, replace the example with the manifest, choose your workspace and select <b>Next</b>. Review the app and select <b>Create and Install</b> (and <b>Allow</b> if Slack asks). If you downloaded the manifest, paste the file's contents.</p>
+<p>Open <a href="https://api.slack.com/apps" target="_blank" rel="noopener noreferrer">api.slack.com/apps</a> and select <b>Create an App</b> → <b>From a manifest</b> → <b>Continue</b>. On the next screen choose the <b>YAML</b> tab, replace the example with the manifest, choose your workspace and select <b>Next</b>. Review the app and select <b>Create and Install</b> (and <b>Allow</b> if Slack asks).</p>
 
 <h3>3. Open the app's settings</h3>
 <p>Slack shows “Axia Security is ready!” with Slack CLI steps: skip them and select <b>Go to App Settings</b>. Keep this Slack tab open — you come back to it in steps 4 and 6.</p>
@@ -44,7 +44,7 @@
 <tr><td><b>Signing Secret</b></td><td>Basic Information → App Credentials → <b>Show</b>, then copy</td></tr>
 <tr><td><b>Bot User OAuth Token</b> (it starts with <code>xoxb-</code>)</td><td>OAuth &amp; Permissions → OAuth Tokens → <b>Copy</b></td></tr>
 </table>
-<div class="note"><p><b>Important.</b> Under App Credentials, copy the <b>Signing Secret</b>, not the Client Secret or the Verification Token.</p></div>
+<div class="note"><p><b>Important.</b> Copy the <b>Signing Secret</b>, not the Client Secret or the Verification Token beside it.</p></div>
 
 <h3>5. Paste them on the Connect screen and select Test &amp; Connect</h3>
 <p>Paste each into its field at the bottom of the Connect window, below step 5: <b>Signing Secret</b> and <b>Bot User OAuth Token</b>. Then select <b>Test &amp; Connect</b>.</p>
@@ -67,7 +67,7 @@
 <p>The app in Slack does not have every permission Axia Security reads with; Connect names each one that is missing. In your app's settings, open <b>OAuth &amp; Permissions</b> → <b>Scopes</b> and add each permission named. Reinstall the app to your workspace, then select <b>Test &amp; Connect</b> again.</p>
 
 <h3>Slack says "Your URL didn't respond"</h3>
-<p>Slack tried the Request URL before Axia Security had your Signing Secret, which is expected the first time. Select <b>Retry</b> next to the Request URL; once it shows <b>Verified</b>, select <b>Save Changes</b>. If it still does not respond, the most common reason is that the secret pasted on the Connect screen is the Client Secret or the Verification Token instead of the Signing Secret: open the Slack connection on the Connect screen, paste the <b>Signing Secret</b> from Basic Information → App Credentials again, and select <b>Retry</b>. If it still does not turn Verified, contact <a href="support.html">Support</a>.</p>
+<p>Slack tried the Request URL before Axia Security had your Signing Secret, which is expected the first time. Select <b>Retry</b> next to the Request URL; once it shows <b>Verified</b>, select <b>Save Changes</b>. If it still does not respond, the most common reason is that the secret pasted on the Connect screen is the Client Secret or the Verification Token instead of the Signing Secret: on the Connect screen select <b>Manage</b> on the Slack card, paste the <b>Signing Secret</b> from Basic Information → App Credentials again and select <b>Save changes</b>, then select <b>Retry</b> in Slack. If it still does not turn Verified, contact <a href="support.html">Support</a>.</p>
 
 <h3>Slack says "You don't have permission to invite people to this channel"</h3>
 <p>Adding the app to a channel needs permission to invite people to that channel. Ask the channel's manager or a workspace admin to type <code>/invite @axia-security</code> there, or use a channel you created.</p>
