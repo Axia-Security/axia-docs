@@ -185,20 +185,12 @@
 
 <div class="card info">
   <div class="card-title">What you'll have at the end</div>
-  <p>A Cursor <strong>hook</strong> on each developer machine that forwards every submitted prompt to Axia, using the <strong>Webhook URL</strong> and <strong>Webhook Secret</strong> Axia gives you on the Connect page.</p>
+  <p>A Cursor <strong>hook</strong> on each developer machine that forwards every submitted prompt to Axia, using the <strong>Webhook URL</strong> and <strong>Webhook Secret</strong> the Axia team gives you.</p>
 </div>
-
-<h2>How it works</h2>
-<ul>
-  <li>Cursor has no cloud feed of prompts: its Admin API, audit logs and webhooks leave prompt text out. So capture happens on the developer's machine. A <code>beforeSubmitPrompt</code> hook runs each time a developer sends a prompt and posts it to your Axia Webhook URL.</li>
-  <li>Axia receives <strong>only the prompt text</strong> plus the conversation ID, workspace folder and the developer's identity. It does not receive the AI's replies or your code.</li>
-  <li>The hook <strong>never blocks or slows the developer</strong>. It always tells Cursor to continue, sends in the background, gives up after 5 seconds, and does nothing if it is not configured.</li>
-  <li>Prompts from one conversation are grouped into one case in Axia.</li>
-</ul>
 
 <h2>Prerequisites</h2>
 <ul>
-  <li>An <strong>Admin</strong> account in Axia, to open the <strong>Connect</strong> page</li>
+  <li>The <strong>Webhook URL</strong> and <strong>Webhook Secret</strong> from the Axia team (step 1)</li>
   <li>A Cursor version with hooks support</li>
   <li>Developer machines on <strong>macOS or Linux</strong>, with <code>python3</code> on the <code>PATH</code> (standard library only, nothing to install). Windows is not supported yet.</li>
   <li>Developer machines can reach your Axia Webhook URL over HTTPS (directly, or through your VPN)</li>
@@ -212,12 +204,11 @@
 
 <hr>
 
-<h2><span class="step-num">1</span> Connect Cursor in Axia</h2>
+<h2><span class="step-num">1</span> Get the Webhook URL and Secret</h2>
 
 <ol>
-  <li>In Axia, open <strong>Connect</strong> and find <strong>Cursor</strong> under AI coding.</li>
-  <li>Click <strong>Connect</strong>.</li>
-  <li>Axia shows a <strong>Webhook URL</strong> and a <strong>Webhook Secret</strong>. Copy both.</li>
+  <li>Ask the Axia team to enable the <strong>Cursor</strong> connector for your organization.</li>
+  <li>They send you a <strong>Webhook URL</strong> and a <strong>Webhook Secret</strong> through a secure channel (for example a password manager or encrypted message).</li>
 </ol>
 
 <table>
@@ -227,8 +218,8 @@
 </table>
 
 <div class="card warning">
-  <div class="card-title">The secret is shown once</div>
-  <p>Save the Webhook Secret in your password manager now. If you lose it, open the connection and click <strong>Regenerate secret</strong>, then update every machine: the old secret stops working.</p>
+  <div class="card-title">Keep the secret safe</div>
+  <p>Store the Webhook Secret in your password manager. If you lose it or think it leaked, ask the Axia team for a new one, then update every machine: the old secret stops working.</p>
 </div>
 
 <hr>
@@ -325,7 +316,7 @@
 <h2><span class="step-num">5</span> Verify</h2>
 <ol>
   <li>On a machine with the hook, open Cursor and send any prompt to the AI.</li>
-  <li>In Axia, the Cursor connection shows a recent event, and the prompt is analyzed. A prompt containing test sensitive data (for example a fake card number) should open a case.</li>
+  <li>Ask the Axia team to confirm the prompt arrived. A prompt containing test sensitive data (for example a fake card number) should open a case.</li>
 </ol>
 
 <hr>
@@ -333,8 +324,8 @@
 <h2 id="troubleshooting">Troubleshooting</h2>
 <table>
   <tr><th>Symptom</th><th>Cause</th><th>Fix</th></tr>
-  <tr><td>Test returns <code>404</code> Unknown source</td><td>Cursor is not connected in Axia, or the URL is wrong</td><td>Connect Cursor (step 1) and copy the Webhook URL exactly</td></tr>
-  <tr><td>Test returns <code>401</code></td><td>Wrong or missing secret</td><td>Paste the secret again, or regenerate it and update every machine</td></tr>
+  <tr><td>Test returns <code>404</code> Unknown source</td><td>The URL is wrong, or Cursor is not enabled for your organization yet</td><td>Copy the Webhook URL exactly, or ask the Axia team to enable Cursor</td></tr>
+  <tr><td>Test returns <code>401</code></td><td>Wrong or missing secret</td><td>Paste the secret again, or ask the Axia team for a new one and update every machine</td></tr>
   <tr><td>Test times out</td><td>The machine can't reach Axia</td><td>Check VPN, proxy and firewall rules for the Axia host</td></tr>
   <tr><td>Test works, but no prompts arrive</td><td>Cursor started without the variables, or the hook isn't loaded</td><td>Check step 3 applied to the login session (on macOS: <code>launchctl getenv AXIA_WEBHOOK_URL</code>), quit and reopen Cursor, check the Hooks tab</td></tr>
   <tr><td>Prompts are attributed to a login name, not an email</td><td>No <code>AXIA_USER_EMAIL</code>, git email or Cursor account email</td><td>Set <code>AXIA_USER_EMAIL</code> or the developer's git email</td></tr>
@@ -345,13 +336,12 @@
 <h2>Verification Checklist</h2>
 
 <ul class="checklist">
-  <li>Cursor connected on the Axia <strong>Connect</strong> page</li>
-  <li><strong>Webhook URL</strong> and <strong>Webhook Secret</strong> saved in your password manager</li>
+  <li><strong>Webhook URL</strong> and <strong>Webhook Secret</strong> received from the Axia team and saved in your password manager</li>
   <li>Test <code>curl</code> from a developer machine returns <code>202</code></li>
   <li>Developers informed that prompts are monitored</li>
   <li><code>AXIA_WEBHOOK_URL</code> and <code>AXIA_WEBHOOK_SECRET</code> set for the login session on every machine</li>
   <li>Enterprise <code>hooks.json</code> deployed with <code>"failClosed": false</code></li>
-  <li>A test prompt shows up in Axia</li>
+  <li>The Axia team confirmed a test prompt arrived</li>
 </ul>
 
 <hr>
