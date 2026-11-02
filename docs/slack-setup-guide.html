@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Slack Setup Guide for Axia</title>
+<style>
+  :root {
+    --bg-dark: #1a1a2e;
+    --bg-medium: #16213e;
+    --bg-card: #1f2b4d;
+    --accent-blue: #00b4d8;
+    --accent-teal: #00c9a7;
+    --white: #ffffff;
+    --light-gray: #bbbbcc;
+    --orange: #ff6b35;
+    --red: #ef476f;
+    --green: #06d6a0;
+    --yellow: #ffd166;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg-dark);
+    color: var(--light-gray);
+    line-height: 1.6;
+    padding: 0;
+  }
+  .container { max-width: 900px; margin: 0 auto; padding: 40px 32px; }
+  h1 {
+    font-size: 2.2rem;
+    color: var(--white);
+    margin-bottom: 8px;
+    border-bottom: 3px solid var(--accent-blue);
+    padding-bottom: 12px;
+  }
+  h1 + p { color: var(--accent-blue); font-size: 1.1rem; margin-bottom: 32px; }
+  h2 {
+    font-size: 1.5rem;
+    color: var(--white);
+    margin-top: 48px;
+    margin-bottom: 16px;
+    padding-left: 12px;
+    border-left: 4px solid var(--accent-blue);
+  }
+  h3 {
+    font-size: 1.15rem;
+    color: var(--accent-teal);
+    margin-top: 24px;
+    margin-bottom: 10px;
+  }
+  p { margin-bottom: 12px; }
+  ol, ul { margin-left: 24px; margin-bottom: 16px; }
+  li { margin-bottom: 6px; }
+  a { color: var(--accent-blue); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  strong { color: var(--white); }
+  code {
+    background: var(--bg-medium);
+    color: var(--accent-teal);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.92em;
+    font-family: 'Cascadia Code', 'Fira Code', Consolas, monospace;
+  }
+  pre {
+    background: var(--bg-medium);
+    border: 1px solid #2a3a5c;
+    border-radius: 8px;
+    padding: 16px 20px;
+    overflow-x: auto;
+    margin-bottom: 16px;
+    font-size: 0.88rem;
+    line-height: 1.5;
+  }
+  pre code { background: none; padding: 0; color: var(--light-gray); }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    font-size: 0.92rem;
+  }
+  th {
+    background: #0d476e;
+    color: var(--white);
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 600;
+  }
+  td {
+    padding: 10px 14px;
+    border-bottom: 1px solid #2a3a5c;
+  }
+  tr:nth-child(even) td { background: var(--bg-medium); }
+  tr:nth-child(odd) td { background: var(--bg-card); }
+  .card {
+    background: var(--bg-medium);
+    border: 1px solid #2a3a5c;
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+  }
+  .card.warning {
+    border-color: var(--orange);
+    background: #2d1a0f;
+  }
+  .card.success {
+    border-color: var(--green);
+    background: #0a2a1f;
+  }
+  .card.info {
+    border-color: var(--accent-blue);
+  }
+  .card-title {
+    color: var(--white);
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .env-block {
+    background: #0d1b2a;
+    border: 2px solid var(--accent-blue);
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin: 20px 0;
+  }
+  .env-block h3 { color: var(--accent-blue); margin-top: 0; }
+  .checklist { list-style: none; margin-left: 0; }
+  .checklist li {
+    padding: 8px 0 8px 28px;
+    position: relative;
+  }
+  .checklist li::before {
+    content: '\2610';
+    position: absolute;
+    left: 0;
+    color: var(--accent-blue);
+    font-size: 1.1em;
+  }
+  .step-num {
+    display: inline-block;
+    width: 32px;
+    height: 32px;
+    background: var(--accent-blue);
+    color: var(--bg-dark);
+    border-radius: 50%;
+    text-align: center;
+    line-height: 32px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+  hr {
+    border: none;
+    border-top: 1px solid #2a3a5c;
+    margin: 40px 0;
+  }
+  @media print {
+    body { background: #fff; color: #333; }
+    .container { max-width: 100%; }
+    h1 { color: #111; border-color: #0078d4; }
+    h2 { color: #111; border-color: #0078d4; }
+    h3 { color: #0078d4; }
+    code { background: #f0f0f0; color: #0078d4; }
+    pre { background: #f5f5f5; border-color: #ddd; }
+    pre code { color: #333; }
+    th { background: #0078d4; }
+    td { border-color: #ddd; }
+    tr:nth-child(even) td { background: #f9f9f9; }
+    tr:nth-child(odd) td { background: #fff; }
+    .card { border-color: #ddd; background: #f9f9f9; }
+    .card.warning { border-color: #e67e22; background: #fef5ec; }
+    .card.success { border-color: #27ae60; background: #eafaf1; }
+    .env-block { border-color: #0078d4; background: #f0f7ff; }
+    strong { color: #111; }
+    a { color: #0078d4; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>Slack Setup Guide</h1>
+<p>Connect your Slack workspace so Axia can monitor the messages and files shared in the channels you choose for DLP analysis.</p>
+
+<div class="card info">
+  <div class="card-title">What you'll have at the end</div>
+  <p>An <strong>Axia Security</strong> app in your Slack workspace, connected to Axia with two values: its <strong>Signing Secret</strong> and its <strong>Bot User OAuth Token</strong>. Axia reads the channels you add the app to, and nothing else.</p>
+</div>
+
+<h2>How it works</h2>
+<ul>
+  <li>You create the Axia Security app in <strong>your own</strong> Slack workspace from a manifest that Axia generates. Nothing is installed from an app directory.</li>
+  <li>Slack sends Axia an event each time someone posts, edits or deletes a message in a channel the app is a member of. Axia then reads the files shared in that message.</li>
+  <li>Axia reads <strong>only the channels you add the app to</strong>, public or private. It does not read direct messages, group DMs or any other channel.</li>
+  <li>Axia <strong>never posts, reacts or changes anything</strong> in Slack. The app asks for read permissions only.</li>
+  <li>Messages from bots and apps are ignored. Edits and deletions are recorded on the case.</li>
+</ul>
+
+<h2>Prerequisites</h2>
+<ul>
+  <li>A Slack workspace on any paid or free plan</li>
+  <li>Permission to create and install apps in the workspace (a <strong>Workspace Admin</strong> or <strong>Owner</strong>, or a member if your workspace allows members to install apps)</li>
+  <li>An <strong>Admin</strong> account in Axia, to open the <strong>Connect</strong> page</li>
+  <li>Your Axia events address must be reachable from the internet over HTTPS, because Slack delivers events to it. Hosted Axia already is. For a self-hosted deployment, see the Deployment guide.</li>
+</ul>
+
+<div class="card info">
+  <div class="card-title">Enterprise Grid</div>
+  <p>The Connect page also lists an <strong>Enterprise Grid</strong> option that reads a whole Slack organization, including private channels and DMs, without adding a bot to each channel. It is marked <em>Coming soon</em>. Until it is available, use the standard (bot) option described here. It works on Enterprise Grid too, one workspace at a time.</p>
+</div>
+
+<hr>
+
+<h2><span class="step-num">1</span> Start the connection in Axia</h2>
+
+<ol>
+  <li>In Axia, open <strong>Connect</strong> and find <strong>Slack</strong>.</li>
+  <li>Click <strong>Connect</strong>. If Axia asks how to connect, choose <strong>Standard (bot)</strong>.</li>
+  <li>Select <strong>Copy manifest</strong>. If your browser does not allow copying, select <strong>Download manifest</strong> and open the file in a text editor.</li>
+</ol>
+
+<div class="card info">
+  <div class="card-title">Keep this window open</div>
+  <p>After you create the app in Slack you come back to this form to paste two values from it.</p>
+</div>
+
+<hr>
+
+<h2><span class="step-num">2</span> Create the app in Slack</h2>
+
+<ol>
+  <li>Open <a href="https://api.slack.com/apps">api.slack.com/apps</a> in a new tab and sign in to your workspace if Slack asks.</li>
+  <li>Click <strong>Create an App</strong>, then <strong>From a manifest</strong>, then <strong>Continue</strong>.</li>
+  <li>Choose the <strong>YAML</strong> tab, delete the example text and paste the manifest you copied.</li>
+  <li>Choose your workspace and click <strong>Next</strong>.</li>
+  <li>Slack shows a summary of the app. Click <strong>Create and Install</strong>, then <strong>Allow</strong> if Slack asks.</li>
+  <li>Slack shows &ldquo;Axia Security is ready!&rdquo; with Slack CLI steps. You don't need them: click <strong>Go to App Settings</strong>. Keep this tab open.</li>
+</ol>
+
+<h3>What the manifest asks for</h3>
+<p>The manifest creates a bot named <code>axia-security</code> with these read-only permissions (bot token scopes):</p>
+<table>
+  <tr><th>Scope</th><th>Purpose</th></tr>
+  <tr><td><code>channels:history</code></td><td>Read messages in the public channels the bot was added to</td></tr>
+  <tr><td><code>groups:history</code></td><td>Read messages in the private channels the bot was added to</td></tr>
+  <tr><td><code>channels:read</code></td><td>Read the name and sharing of the public channels the bot is in</td></tr>
+  <tr><td><code>groups:read</code></td><td>Read the name and sharing of the private channels the bot is in</td></tr>
+  <tr><td><code>users:read</code></td><td>Tell members, guests and people from outside the organization apart</td></tr>
+  <tr><td><code>users:read.email</code></td><td>Read each author's email address, to match them to your employee directory</td></tr>
+  <tr><td><code>files:read</code></td><td>Read the files shared in those channels, including their content</td></tr>
+</table>
+
+<p>It also subscribes the app to these events:</p>
+<table>
+  <tr><th>Event</th><th>Why</th></tr>
+  <tr><td><code>message.channels</code></td><td>Messages in public channels the bot is in</td></tr>
+  <tr><td><code>message.groups</code></td><td>Messages in private channels the bot is in</td></tr>
+  <tr><td><code>channel_shared</code> / <code>channel_unshared</code></td><td>A channel starts or stops being shared with another organization (Slack Connect), which changes who can see it</td></tr>
+</table>
+
+<hr>
+
+<h2><span class="step-num">3</span> Copy the two credentials into Axia</h2>
+
+<p>Copy and paste one value at a time: your clipboard holds one value.</p>
+
+<ol>
+  <li>In the Slack app settings, open <strong>Basic Information</strong>. Under <strong>App Credentials</strong>, next to <strong>Signing Secret</strong>, click <strong>Show</strong> and copy the value.</li>
+  <li>Back in Axia, paste it into the <strong>Signing Secret</strong> field.</li>
+  <li>In Slack, open <strong>OAuth &amp; Permissions</strong>. Under <strong>OAuth Tokens</strong>, copy the <strong>Bot User OAuth Token</strong> (it starts with <code>xoxb-</code>).</li>
+  <li>Back in Axia, paste it into the <strong>Bot User OAuth Token</strong> field and click <strong>Test &amp; Connect</strong>.</li>
+</ol>
+
+<table>
+  <tr><th>Value to copy</th><th>Where to find it</th><th>Looks like</th></tr>
+  <tr><td><strong>Signing Secret</strong></td><td>Basic Information &gt; App Credentials</td><td>32 hex characters</td></tr>
+  <tr><td><strong>Bot User OAuth Token</strong></td><td>OAuth &amp; Permissions &gt; OAuth Tokens</td><td><code>xoxb-…</code></td></tr>
+</table>
+
+<div class="card warning">
+  <div class="card-title">Important</div>
+  <p>Copy the <strong>Signing Secret</strong>, not the <strong>Client Secret</strong> or the <strong>Verification Token</strong> next to it. Copy the <strong>Bot</strong> token (<code>xoxb-</code>), not a user token (<code>xoxp-</code>). Axia checks the token and its scopes when you click Test &amp; Connect.</p>
+</div>
+
+<hr>
+
+<h2><span class="step-num">4</span> Verify the events address in Slack</h2>
+
+<ol>
+  <li>In the Slack app settings, open <strong>Event Subscriptions</strong>.</li>
+  <li>The <strong>Request URL</strong> may show &ldquo;Your URL didn't respond&rdquo;. That is expected: Slack tried it before Axia had your Signing Secret.</li>
+  <li>Click <strong>Retry</strong> (or <strong>Verify</strong>). It turns <strong>Verified</strong>.</li>
+  <li>Click <strong>Save Changes</strong> at the bottom of the page.</li>
+</ol>
+
+<hr>
+
+<h2><span class="step-num">5</span> Add the app to the channels Axia should read</h2>
+
+<p>Axia reads exactly the channels the app is a member of. Repeat this for each channel, public or private:</p>
+<ul>
+  <li>In the channel, type <code>/invite @Axia</code> and choose <strong>Axia Security</strong> from the list, <strong>or</strong></li>
+  <li>Open the channel's details &gt; <strong>Integrations</strong> (in newer Slack: <strong>Agents &amp; apps</strong>) &gt; <strong>Add an app</strong> &gt; <strong>Axia Security</strong>.</li>
+</ul>
+<p>You need permission to invite people to the channel. If Slack says you don't have it, ask the channel's manager or a workspace admin.</p>
+
+<div class="card success">
+  <div class="card-title">Done</div>
+  <p>Back in Axia, click <strong>Done</strong>. The channel list on the connection shows the channels the app is in, as a check. To stop reading a channel, remove the app from it in Slack. To stop entirely, remove the connection in Axia and uninstall the app in Slack.</p>
+</div>
+
+<hr>
+
+<h2>Connection status</h2>
+<p>Axia cannot test the Signing Secret from the Connect page, so it marks the connection healthy only once messages arrive.</p>
+<table>
+  <tr><th>Status on the Connect page</th><th>Meaning</th><th>What to do</th></tr>
+  <tr><td><strong>Awaiting first event</strong></td><td>No message has arrived yet</td><td>Check step 4 shows <em>Verified</em>, check step 5 for at least one channel, then post a test message there</td></tr>
+  <tr><td><strong>No messages for 24 h</strong></td><td>Nothing has arrived for a day</td><td>Normal for quiet channels or weekends. Otherwise check the app is still installed and in the channels</td></tr>
+  <tr><td><strong>Status unavailable</strong></td><td>Axia could not read the status</td><td>Try again later. Contact Support if it persists</td></tr>
+</table>
+
+<h2>Troubleshooting</h2>
+<ul>
+  <li><strong>Test &amp; Connect reports missing permissions.</strong> The app was created from an older or edited manifest. In Slack, open <strong>OAuth &amp; Permissions</strong>, add the missing scopes under <strong>Bot Token Scopes</strong>, click <strong>Reinstall to Workspace</strong>, then paste the token again.</li>
+  <li><strong>The Request URL never verifies.</strong> Check the Signing Secret in Axia matches the one in Slack (edit the connection to paste it again). For self-hosted deployments, check the events address is reachable from the internet over HTTPS.</li>
+  <li><strong>Messages in a channel are missing.</strong> Make sure the app is a member of that channel. Messages posted before the app joined are not read.</li>
+  <li><strong>Direct messages are not monitored.</strong> This is by design for the standard (bot) option.</li>
+</ul>
+
+<hr>
+
+<h2>Verification Checklist</h2>
+
+<ul class="checklist">
+  <li>Axia Security app created in Slack from the manifest copied from Axia</li>
+  <li>App installed to the workspace</li>
+  <li><strong>Signing Secret</strong> pasted (not the Client Secret or Verification Token)</li>
+  <li><strong>Bot User OAuth Token</strong> (<code>xoxb-</code>) pasted and <strong>Test &amp; Connect</strong> succeeded</li>
+  <li>Event Subscriptions Request URL shows <strong>Verified</strong> and changes are saved</li>
+  <li>App added to every channel Axia should read</li>
+  <li>A test message posted in one of those channels, and the connection no longer shows <em>Awaiting first event</em></li>
+</ul>
+
+<hr>
+
+</div>
+</body>
+</html>
