@@ -150,6 +150,16 @@
     margin-right: 8px;
     vertical-align: middle;
   }
+  .btn {
+    display: inline-block;
+    background: var(--accent-blue);
+    color: var(--bg-dark);
+    font-weight: 600;
+    padding: 10px 18px;
+    border-radius: 6px;
+    margin: 4px 0 8px;
+  }
+  .btn:hover { text-decoration: none; filter: brightness(1.1); }
   hr {
     border: none;
     border-top: 1px solid #2a3a5c;
@@ -192,7 +202,7 @@
 <ul>
   <li>Developer machines on <strong>macOS or Linux</strong>, with <code>python3</code> on the <code>PATH</code> (standard library only, nothing to install). Windows is not supported yet.</li>
   <li>Developer machines can reach your Axia Webhook URL over HTTPS (directly, or through your VPN)</li>
-  <li>For a fleet rollout: an MDM or configuration management tool (Jamf, Kandji, Intune, Ansible…) that can place a file on each machine</li>
+  <li>For a fleet rollout: an MDM or configuration management tool (Jamf, Kandji, Intune, Ansible…) that can place a file on each machine, or a <strong>Claude for Teams</strong> or <strong>Enterprise</strong> plan to deploy from the Claude admin console</li>
 </ul>
 
 <div class="card warning">
@@ -239,18 +249,7 @@
 
 <h2><span class="step-num">3</span> Deploy the hook</h2>
 
-<p>Choose one option. Use the <strong>managed</strong> option for production: developers cannot remove or override it. Use the <strong>per-user</strong> option to try it on your own machine first.</p>
-
-<h3>Option A &mdash; Managed settings (recommended)</h3>
-<p>Push this file with your MDM. Claude Code reads it on every machine and it takes precedence over user and project settings.</p>
-
-<table>
-  <tr><th>OS</th><th>Path</th></tr>
-  <tr><td>macOS</td><td><code>/Library/Application Support/ClaudeCode/managed-settings.json</code></td></tr>
-  <tr><td>Linux</td><td><code>/etc/claude-code/managed-settings.json</code></td></tr>
-</table>
-
-<p>If the file already exists, merge the <code>env</code> and <code>hooks</code> keys into it. Replace the two placeholder values:</p>
+<p>All three options below use the same settings. Copy them and replace the two placeholder values with the ones from step 1:</p>
 
 <pre><code>{
   "env": {
@@ -272,14 +271,38 @@
   }
 }</code></pre>
 
+<p>Use the <strong>Claude admin console</strong> or <strong>MDM</strong> option for production: developers cannot remove or override them. Use the <strong>per-user</strong> option to try it on your own machine first.</p>
+
+<h3>Option A &mdash; Claude admin console (recommended)</h3>
+<p>For <strong>Claude for Teams</strong> and <strong>Claude for Enterprise</strong>. Claude delivers the settings to every developer who signs in to Claude Code with your organization's account, with no file to deploy.</p>
+<p><a class="btn" href="https://claude.ai/admin-settings/claude-code" target="_blank" rel="noopener noreferrer">Open Claude managed settings &#8599;</a></p>
+<ol>
+  <li>Sign in to claude.ai as an <strong>Owner</strong> or <strong>Primary Owner</strong> of your Claude organization.</li>
+  <li>Go to <strong>Organization settings</strong> &gt; <strong>Claude Code</strong> &gt; <strong>Managed settings</strong> (the button above opens it).</li>
+  <li>Paste the settings above, or merge the <code>env</code> and <code>hooks</code> keys into the settings already there, and save.</li>
+</ol>
+<div class="card info">
+  <div class="card-title">Good to know</div>
+  <p>Developers see a one-time security prompt asking them to approve the hook. Settings from the console only reach sessions signed in with your Claude Teams or Enterprise account. Sessions that use a Claude Console API key, Amazon Bedrock or Google Vertex AI don't receive them: use Option B for those machines.</p>
+</div>
+
+<h3>Option B &mdash; Managed settings file (MDM)</h3>
+<p>Push the settings as a file with your MDM. Claude Code reads it on every machine and it takes precedence over user and project settings. If the file already exists, merge the <code>env</code> and <code>hooks</code> keys into it.</p>
+
+<table>
+  <tr><th>OS</th><th>Path</th></tr>
+  <tr><td>macOS</td><td><code>/Library/Application Support/ClaudeCode/managed-settings.json</code></td></tr>
+  <tr><td>Linux</td><td><code>/etc/claude-code/managed-settings.json</code></td></tr>
+</table>
+
 <div class="card info">
   <div class="card-title">Protect the file</div>
   <p>The file holds the Webhook Secret. Make it owned by root and not writable by users (for example <code>chown root:wheel</code> and <code>chmod 644</code> on macOS). The secret only lets a machine send prompts to Axia; it cannot read anything.</p>
 </div>
 
-<h3>Option B &mdash; Per-user (for testing)</h3>
+<h3>Option C &mdash; Per-user (for testing)</h3>
 <ol>
-  <li>Merge the same JSON into <code>~/.claude/settings.json</code> on your machine.</li>
+  <li>Merge the settings into <code>~/.claude/settings.json</code> on your machine.</li>
   <li>Restart Claude Code. Run <code>/hooks</code> in Claude Code to check that <code>UserPromptSubmit</code> lists the hook.</li>
 </ol>
 <p>A developer can edit or remove this file, so don't rely on it for monitoring.</p>
@@ -322,7 +345,7 @@
   <li><strong>Webhook URL</strong> and <strong>Webhook Secret</strong> saved in your password manager</li>
   <li>Test <code>curl</code> from a developer machine returns <code>202</code></li>
   <li>Developers informed that prompts are monitored</li>
-  <li>Managed settings file deployed by MDM, owned by root</li>
+  <li>Settings deployed from the Claude admin console, or as a managed settings file by MDM (owned by root)</li>
   <li><code>AXIA_USER_EMAIL</code> set, or developers' git email is their work email</li>
   <li>A test prompt shows up in Axia</li>
 </ul>

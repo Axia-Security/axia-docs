@@ -150,6 +150,16 @@
     margin-right: 8px;
     vertical-align: middle;
   }
+  .btn {
+    display: inline-block;
+    background: var(--accent-blue);
+    color: var(--bg-dark);
+    font-weight: 600;
+    padding: 10px 18px;
+    border-radius: 6px;
+    margin: 4px 0 8px;
+  }
+  .btn:hover { text-decoration: none; filter: brightness(1.1); }
   hr {
     border: none;
     border-top: 1px solid #2a3a5c;
@@ -275,7 +285,7 @@
   <tr><th>Scope</th><th>Path</th><th>Use for</th></tr>
   <tr><td>Enterprise (macOS)</td><td><code>/Library/Application Support/Cursor/hooks.json</code></td><td>Fleet rollout by MDM</td></tr>
   <tr><td>Enterprise (Linux)</td><td><code>/etc/cursor/hooks.json</code></td><td>Fleet rollout by MDM</td></tr>
-  <tr><td>Team</td><td>Cursor team dashboard (Cursor Enterprise)</td><td>Fleet rollout without MDM</td></tr>
+  <tr><td>Team</td><td>Cursor dashboard (Cursor Enterprise, see below)</td><td>Fleet rollout without MDM</td></tr>
   <tr><td>User</td><td><code>~/.cursor/hooks.json</code></td><td>Testing on one machine</td></tr>
 </table>
 
@@ -299,7 +309,18 @@
   <p>With <code>"failClosed": false</code>, a network error or a missing <code>python3</code> never stops a developer's prompt. The hook also always prints <code>{"continue": true}</code>, so Axia only observes: it never blocks.</p>
 </div>
 
-<p>Restart Cursor after deploying. In Cursor's settings, the <strong>Hooks</strong> tab lists the hook and shows its output if it fails.</p>
+<h3>Cursor Enterprise: deploy from the Cursor dashboard</h3>
+<p>On <strong>Cursor Enterprise</strong> you can add the hook in the Cursor web dashboard instead of deploying a file. Cursor syncs it to every team member automatically, about every 30 minutes. You still need to set the variables on each machine (step 3).</p>
+<p><a class="btn" href="https://cursor.com/dashboard/team-content?section=hooks" target="_blank" rel="noopener noreferrer">Open Cursor team hooks &#8599;</a></p>
+<ol>
+  <li>Sign in to the Cursor dashboard as a team admin. The button above opens the hooks section.</li>
+  <li>Add a hook on the <strong>beforeSubmitPrompt</strong> step, with this script:</li>
+</ol>
+<pre><code>#!/bin/sh
+python3 -c "import os,sys,json,shutil,subprocess,getpass,datetime as dt,urllib.request; s=os.environ.get('AXIA_WEBHOOK_SECRET',''); url=os.environ.get('AXIA_WEBHOOK_URL',''); (s and url) or sys.exit(0); d=json.load(sys.stdin); e=(subprocess.run(['git','config','user.email'],capture_output=True,text=True).stdout.strip() if shutil.which('git') else ''); r=d.get('workspace_roots') or ['']; u=os.environ.get('AXIA_USER_EMAIL') or e or d.get('user_email') or getpass.getuser(); body=json.dumps({'event':'user_prompt_submit','timestamp':dt.datetime.now(dt.timezone.utc).isoformat(),'project_dir':(r[0] if r else ''),'data':{'user_prompt':d.get('prompt',''),'session_id':d.get('conversation_id',''),'prompt_id':d.get('generation_id',''),'user':u}}); req=urllib.request.Request(url, data=body.encode(), headers={'Content-Type':'application/json','X-Webhook-Secret':s}, method='POST'); os.fork() or (os.setsid(), urllib.request.urlopen(req,timeout=5), os._exit(0))" 2&gt;/dev/null; echo '{"continue": true}'</code></pre>
+<p>Dashboard hooks don't take a <code>failClosed</code> option. They fail open by default, so the prompt still goes through if the hook fails.</p>
+
+<p>Restart Cursor after deploying. In Cursor, the <strong>Hooks</strong> tab under <strong>Customize</strong> lists the hook and shows its output if it fails.</p>
 
 <h3 id="identity">Which user is the prompt attributed to?</h3>
 <p>The hook works out the developer's identity in this order:</p>
@@ -327,7 +348,7 @@
   <tr><td>Test returns <code>404</code> Unknown source</td><td>Cursor is not connected in Axia, or the URL is wrong</td><td>Connect Cursor (step 1) and copy the Webhook URL exactly</td></tr>
   <tr><td>Test returns <code>401</code></td><td>Wrong or missing secret</td><td>Paste the secret again, or regenerate it on the Connect page and update every machine</td></tr>
   <tr><td>Test times out</td><td>The machine can't reach Axia</td><td>Check VPN, proxy and firewall rules for the Axia host</td></tr>
-  <tr><td>Test works, but no prompts arrive</td><td>Cursor started without the variables, or the hook isn't loaded</td><td>Check step 3 applied to the login session (on macOS: <code>launchctl getenv AXIA_WEBHOOK_URL</code>), quit and reopen Cursor, check the Hooks tab</td></tr>
+  <tr><td>Test works, but no prompts arrive</td><td>Cursor started without the variables, or the hook isn't loaded</td><td>Check step 3 applied to the login session (on macOS: <code>launchctl getenv AXIA_WEBHOOK_URL</code>), quit and reopen Cursor, check <strong>Customize</strong> &gt; <strong>Hooks</strong></td></tr>
   <tr><td>Prompts are attributed to a login name, not an email</td><td>No <code>AXIA_USER_EMAIL</code>, git email or Cursor account email</td><td>Set <code>AXIA_USER_EMAIL</code> or the developer's git email</td></tr>
 </table>
 
