@@ -200,7 +200,8 @@
 
 <h2>Prerequisites</h2>
 <ul>
-  <li>Developer machines on <strong>macOS or Linux</strong>, with <code>python3</code> on the <code>PATH</code> (standard library only, nothing to install). Windows is not supported yet.</li>
+  <li>Developer machines on <strong>macOS, Linux or Windows</strong>, with Python 3 on the <code>PATH</code> as <code>python3</code> or <code>python</code> (standard library only, nothing to install)</li>
+  <li>On <strong>Windows</strong>: <a href="https://git-scm.com/downloads/win">Git for Windows</a>. Claude Code runs hooks with its Git Bash; without it, the hook does not run.</li>
   <li>Developer machines can reach your Axia Webhook URL over HTTPS (directly, or through your VPN)</li>
   <li>For a fleet rollout: an MDM or configuration management tool (Jamf, Kandji, Intune, Ansible…) that can place a file on each machine, or a <strong>Claude for Teams</strong> or <strong>Enterprise</strong> plan to deploy from the Claude admin console</li>
 </ul>
@@ -263,7 +264,7 @@
           {
             "type": "command",
             "timeout": 10,
-            "command": "python3 -c \"import os,sys,json,shutil,subprocess,getpass,datetime as dt,urllib.request; s=os.environ.get('AXIA_WEBHOOK_SECRET',''); url=os.environ.get('AXIA_WEBHOOK_URL',''); (s and url) or sys.exit(0); d=json.load(sys.stdin); e=(subprocess.run(['git','config','user.email'],capture_output=True,text=True).stdout.strip() if shutil.which('git') else ''); u=os.environ.get('AXIA_USER_EMAIL') or e or getpass.getuser(); body=json.dumps({'event':'user_prompt_submit','timestamp':dt.datetime.now(dt.timezone.utc).isoformat(),'project_dir':d.get('cwd',''),'data':{'user_prompt':d.get('prompt',''),'session_id':d.get('session_id',''),'prompt_id':d.get('prompt_id',''),'user':u}}); req=urllib.request.Request(url, data=body.encode(), headers={'Content-Type':'application/json','X-Webhook-Secret':s}, method='POST'); os.fork() or (os.setsid(), urllib.request.urlopen(req,timeout=5), os._exit(0))\" 2&gt;/dev/null || true"
+            "command": "for p in python3 python; do $p -V &gt;/dev/null 2&gt;&amp;1 &amp;&amp; break; done; $p -c \"import os,sys,json,shutil,subprocess,getpass,datetime as dt;s=os.environ.get('AXIA_WEBHOOK_SECRET','');url=os.environ.get('AXIA_WEBHOOK_URL','');(s and url) or sys.exit(0);d=json.load(sys.stdin);e=(subprocess.run(['git','config','user.email'],capture_output=True,text=True).stdout.strip() if shutil.which('git') else '');u=os.environ.get('AXIA_USER_EMAIL') or e or getpass.getuser();body=json.dumps({'event':'user_prompt_submit','timestamp':dt.datetime.now(dt.timezone.utc).isoformat(),'project_dir':d.get('cwd',''),'data':{'user_prompt':d.get('prompt',''),'session_id':d.get('session_id',''),'prompt_id':d.get('prompt_id',''),'user':u}});p=subprocess.Popen([sys.executable,'-c','import sys,json,urllib.request as r;m=json.loads(sys.stdin.buffer.readline());r.urlopen(r.Request(m[0],data=sys.stdin.buffer.read(),headers=m[1]),timeout=5)'],stdin=subprocess.PIPE,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,**({'creationflags':0x00000208} if os.name=='nt' else {'start_new_session':True}));p.stdin.write(json.dumps([url,{'Content-Type':'application/json','X-Webhook-Secret':s}]).encode()+bytes([10])+body.encode());p.stdin.close()\" 2&gt;/dev/null || true"
           }
         ]
       }
@@ -293,11 +294,12 @@
   <tr><th>OS</th><th>Path</th></tr>
   <tr><td>macOS</td><td><code>/Library/Application Support/ClaudeCode/managed-settings.json</code></td></tr>
   <tr><td>Linux</td><td><code>/etc/claude-code/managed-settings.json</code></td></tr>
+  <tr><td>Windows</td><td><code>C:\Program Files\ClaudeCode\managed-settings.json</code></td></tr>
 </table>
 
 <div class="card info">
   <div class="card-title">Protect the file</div>
-  <p>The file holds the Webhook Secret. Make it owned by root and not writable by users (for example <code>chown root:wheel</code> and <code>chmod 644</code> on macOS). The secret only lets a machine send prompts to Axia; it cannot read anything.</p>
+  <p>The file holds the Webhook Secret. Make it owned by root and not writable by users (for example <code>chown root:wheel</code> and <code>chmod 644</code> on macOS; on Windows, only Administrators can write to <code>C:\Program Files</code>). The secret only lets a machine send prompts to Axia; it cannot read anything.</p>
 </div>
 
 <h3>Option C &mdash; Per-user (for testing)</h3>
@@ -332,7 +334,8 @@
   <tr><td>Test returns <code>404</code> Unknown source</td><td>Claude Code is not connected in Axia, or the URL is wrong</td><td>Connect Claude Code (step 1) and copy the Webhook URL exactly</td></tr>
   <tr><td>Test returns <code>401</code></td><td>Wrong or missing secret</td><td>Paste the secret again, or regenerate it on the Connect page and update every machine</td></tr>
   <tr><td>Test times out</td><td>The machine can't reach Axia</td><td>Check VPN, proxy and firewall rules for the Axia host</td></tr>
-  <tr><td>Test works, but no prompts arrive</td><td>The hook isn't loaded, or the variables are empty</td><td>Run <code>/hooks</code> in Claude Code; check the <code>env</code> block; check <code>python3 --version</code> works in a terminal</td></tr>
+  <tr><td>Test works, but no prompts arrive</td><td>The hook isn't loaded, or the variables are empty</td><td>Run <code>/hooks</code> in Claude Code; check the <code>env</code> block; check <code>python3 --version</code> (Windows: <code>python --version</code>) works in a terminal</td></tr>
+  <tr><td>No prompts arrive from Windows machines</td><td>Git for Windows is missing, so Claude Code runs the hook in PowerShell</td><td>Install Git for Windows, or set <code>CLAUDE_CODE_GIT_BASH_PATH</code> if it is installed somewhere Claude Code doesn't find</td></tr>
   <tr><td>Prompts are attributed to a login name, not an email</td><td>No <code>AXIA_USER_EMAIL</code> and no git email</td><td>Set <code>AXIA_USER_EMAIL</code> or the developer's git email</td></tr>
 </table>
 

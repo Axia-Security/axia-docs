@@ -201,7 +201,7 @@
 <h2>Prerequisites</h2>
 <ul>
   <li>A Cursor version with hooks support</li>
-  <li>Developer machines on <strong>macOS or Linux</strong>, with <code>python3</code> on the <code>PATH</code> (standard library only, nothing to install). Windows is not supported yet.</li>
+  <li>Developer machines on <strong>macOS or Linux</strong> with <code>python3</code> on the <code>PATH</code>, or <strong>Windows</strong> with <code>python</code> on the <code>PATH</code> (Python 3, standard library only, nothing to install)</li>
   <li>Developer machines can reach your Axia Webhook URL over HTTPS (directly, or through your VPN)</li>
   <li>For a fleet rollout: an MDM or configuration management tool (Jamf, Kandji, Intune, Ansible…), or <strong>Cursor Enterprise</strong> for hooks managed from the Cursor team dashboard</li>
 </ul>
@@ -250,7 +250,7 @@
 
 <h2><span class="step-num">3</span> Set the URL and secret on each machine</h2>
 
-<p>The hook reads two environment variables. Cursor must see them when it starts, so set them for the user's login session, not only in a shell profile: Cursor opened from the Dock or an app launcher does not read <code>~/.zshrc</code> or <code>~/.bashrc</code>.</p>
+<p>The hook reads two environment variables. Cursor must see them when it starts, so set them for the user's login session, not only in a shell profile: Cursor opened from the Dock, Start menu or an app launcher does not read <code>~/.zshrc</code>, <code>~/.bashrc</code> or a PowerShell profile.</p>
 
 <table>
   <tr><th>Variable</th><th>Value</th></tr>
@@ -275,6 +275,12 @@
 <h3>Linux</h3>
 <p>Add the variables to <code>/etc/environment</code> (or a file in <code>/etc/environment.d/</code>), then have the user log out and back in.</p>
 
+<h3>Windows</h3>
+<p>Set them as system environment variables, with Intune or another MDM, or from an Administrator command prompt:</p>
+<pre><code>setx /M AXIA_WEBHOOK_URL "https://&lt;your-axia-host&gt;/api/v1/webhooks/cursor"
+setx /M AXIA_WEBHOOK_SECRET "&lt;webhook-secret&gt;"</code></pre>
+<p>Have the user sign out and back in, so Cursor starts with the new variables.</p>
+
 <hr>
 
 <h2><span class="step-num">4</span> Deploy the hook</h2>
@@ -285,12 +291,14 @@
   <tr><th>Scope</th><th>Path</th><th>Use for</th></tr>
   <tr><td>Enterprise (macOS)</td><td><code>/Library/Application Support/Cursor/hooks.json</code></td><td>Fleet rollout by MDM</td></tr>
   <tr><td>Enterprise (Linux)</td><td><code>/etc/cursor/hooks.json</code></td><td>Fleet rollout by MDM</td></tr>
+  <tr><td>Enterprise (Windows)</td><td><code>C:\ProgramData\Cursor\hooks.json</code></td><td>Fleet rollout by MDM</td></tr>
   <tr><td>Team</td><td>Cursor dashboard (Cursor Enterprise, see below)</td><td>Fleet rollout without MDM</td></tr>
   <tr><td>User</td><td><code>~/.cursor/hooks.json</code></td><td>Testing on one machine</td></tr>
 </table>
 
-<p>The file contents (if a <code>hooks.json</code> already exists there, add the <code>beforeSubmitPrompt</code> entry to it):</p>
+<p>The file contents differ by operating system, because Cursor runs hooks with PowerShell on Windows. If a <code>hooks.json</code> already exists there, add the <code>beforeSubmitPrompt</code> entry to it.</p>
 
+<h3>macOS and Linux</h3>
 <pre><code>{
   "version": 1,
   "hooks": {
@@ -298,7 +306,21 @@
       {
         "timeout": 10,
         "failClosed": false,
-        "command": "python3 -c \"import os,sys,json,shutil,subprocess,getpass,datetime as dt,urllib.request; s=os.environ.get('AXIA_WEBHOOK_SECRET',''); url=os.environ.get('AXIA_WEBHOOK_URL',''); (s and url) or sys.exit(0); d=json.load(sys.stdin); e=(subprocess.run(['git','config','user.email'],capture_output=True,text=True).stdout.strip() if shutil.which('git') else ''); r=d.get('workspace_roots') or ['']; u=os.environ.get('AXIA_USER_EMAIL') or e or d.get('user_email') or getpass.getuser(); body=json.dumps({'event':'user_prompt_submit','timestamp':dt.datetime.now(dt.timezone.utc).isoformat(),'project_dir':(r[0] if r else ''),'data':{'user_prompt':d.get('prompt',''),'session_id':d.get('conversation_id',''),'prompt_id':d.get('generation_id',''),'user':u}}); req=urllib.request.Request(url, data=body.encode(), headers={'Content-Type':'application/json','X-Webhook-Secret':s}, method='POST'); os.fork() or (os.setsid(), urllib.request.urlopen(req,timeout=5), os._exit(0))\" 2&gt;/dev/null; echo '{\"continue\": true}'"
+        "command": "python3 -c \"import os,sys,json,shutil,subprocess,getpass,datetime as dt;s=os.environ.get('AXIA_WEBHOOK_SECRET','');url=os.environ.get('AXIA_WEBHOOK_URL','');(s and url) or sys.exit(0);d=json.load(sys.stdin);e=(subprocess.run(['git','config','user.email'],capture_output=True,text=True).stdout.strip() if shutil.which('git') else '');r=d.get('workspace_roots') or [''];u=os.environ.get('AXIA_USER_EMAIL') or e or d.get('user_email') or getpass.getuser();body=json.dumps({'event':'user_prompt_submit','timestamp':dt.datetime.now(dt.timezone.utc).isoformat(),'project_dir':(r[0] if r else ''),'data':{'user_prompt':d.get('prompt',''),'session_id':d.get('conversation_id',''),'prompt_id':d.get('generation_id',''),'user':u}});p=subprocess.Popen([sys.executable,'-c','import sys,json,urllib.request as r;m=json.loads(sys.stdin.buffer.readline());r.urlopen(r.Request(m[0],data=sys.stdin.buffer.read(),headers=m[1]),timeout=5)'],stdin=subprocess.PIPE,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,**({'creationflags':0x00000208} if os.name=='nt' else {'start_new_session':True}));p.stdin.write(json.dumps([url,{'Content-Type':'application/json','X-Webhook-Secret':s}]).encode()+bytes([10])+body.encode());p.stdin.close()\" 2&gt;/dev/null; echo '{\"continue\": true}'"
+      }
+    ]
+  }
+}</code></pre>
+
+<h3>Windows</h3>
+<pre><code>{
+  "version": 1,
+  "hooks": {
+    "beforeSubmitPrompt": [
+      {
+        "timeout": 10,
+        "failClosed": false,
+        "command": "python -c 'import os,sys,json,shutil,subprocess,getpass,datetime as dt;s=os.environ.get(''AXIA_WEBHOOK_SECRET'','''');url=os.environ.get(''AXIA_WEBHOOK_URL'','''');(s and url) or sys.exit(0);d=json.load(sys.stdin);e=(subprocess.run([''git'',''config'',''user.email''],capture_output=True,text=True).stdout.strip() if shutil.which(''git'') else '''');r=d.get(''workspace_roots'') or [''''];u=os.environ.get(''AXIA_USER_EMAIL'') or e or d.get(''user_email'') or getpass.getuser();body=json.dumps({''event'':''user_prompt_submit'',''timestamp'':dt.datetime.now(dt.timezone.utc).isoformat(),''project_dir'':(r[0] if r else ''''),''data'':{''user_prompt'':d.get(''prompt'',''''),''session_id'':d.get(''conversation_id'',''''),''prompt_id'':d.get(''generation_id'',''''),''user'':u}});p=subprocess.Popen([sys.executable,''-c'',''import sys,json,urllib.request as r;m=json.loads(sys.stdin.buffer.readline());r.urlopen(r.Request(m[0],data=sys.stdin.buffer.read(),headers=m[1]),timeout=5)''],stdin=subprocess.PIPE,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,**({''creationflags'':0x00000208} if os.name==''nt'' else {''start_new_session'':True}));p.stdin.write(json.dumps([url,{''Content-Type'':''application/json'',''X-Webhook-Secret'':s}]).encode()+bytes([10])+body.encode());p.stdin.close()' 2&gt;$null; Write-Output '{\"continue\": true}'"
       }
     ]
   }
@@ -306,7 +328,7 @@
 
 <div class="card warning">
   <div class="card-title">Keep <code>failClosed</code> off</div>
-  <p>With <code>"failClosed": false</code>, a network error or a missing <code>python3</code> never stops a developer's prompt. The hook also always prints <code>{"continue": true}</code>, so Axia only observes: it never blocks.</p>
+  <p>With <code>"failClosed": false</code>, a network error or a missing Python never stops a developer's prompt. The hook also always prints <code>{"continue": true}</code>, so Axia only observes: it never blocks.</p>
 </div>
 
 <h3>Cursor Enterprise: deploy from the Cursor dashboard</h3>
@@ -314,10 +336,13 @@
 <p><a class="btn" href="https://cursor.com/dashboard/team-content?section=hooks" target="_blank" rel="noopener noreferrer">Open Cursor team hooks &#8599;</a></p>
 <ol>
   <li>Sign in to the Cursor dashboard as a team admin. The button above opens the hooks section.</li>
-  <li>Add a hook on the <strong>beforeSubmitPrompt</strong> step, with this script:</li>
+  <li>Add a hook on the <strong>beforeSubmitPrompt</strong> step for each operating system your developers use, targeted to that system, with the script below.</li>
 </ol>
+<p><strong>macOS and Linux:</strong></p>
 <pre><code>#!/bin/sh
-python3 -c "import os,sys,json,shutil,subprocess,getpass,datetime as dt,urllib.request; s=os.environ.get('AXIA_WEBHOOK_SECRET',''); url=os.environ.get('AXIA_WEBHOOK_URL',''); (s and url) or sys.exit(0); d=json.load(sys.stdin); e=(subprocess.run(['git','config','user.email'],capture_output=True,text=True).stdout.strip() if shutil.which('git') else ''); r=d.get('workspace_roots') or ['']; u=os.environ.get('AXIA_USER_EMAIL') or e or d.get('user_email') or getpass.getuser(); body=json.dumps({'event':'user_prompt_submit','timestamp':dt.datetime.now(dt.timezone.utc).isoformat(),'project_dir':(r[0] if r else ''),'data':{'user_prompt':d.get('prompt',''),'session_id':d.get('conversation_id',''),'prompt_id':d.get('generation_id',''),'user':u}}); req=urllib.request.Request(url, data=body.encode(), headers={'Content-Type':'application/json','X-Webhook-Secret':s}, method='POST'); os.fork() or (os.setsid(), urllib.request.urlopen(req,timeout=5), os._exit(0))" 2&gt;/dev/null; echo '{"continue": true}'</code></pre>
+python3 -c "import os,sys,json,shutil,subprocess,getpass,datetime as dt;s=os.environ.get('AXIA_WEBHOOK_SECRET','');url=os.environ.get('AXIA_WEBHOOK_URL','');(s and url) or sys.exit(0);d=json.load(sys.stdin);e=(subprocess.run(['git','config','user.email'],capture_output=True,text=True).stdout.strip() if shutil.which('git') else '');r=d.get('workspace_roots') or [''];u=os.environ.get('AXIA_USER_EMAIL') or e or d.get('user_email') or getpass.getuser();body=json.dumps({'event':'user_prompt_submit','timestamp':dt.datetime.now(dt.timezone.utc).isoformat(),'project_dir':(r[0] if r else ''),'data':{'user_prompt':d.get('prompt',''),'session_id':d.get('conversation_id',''),'prompt_id':d.get('generation_id',''),'user':u}});p=subprocess.Popen([sys.executable,'-c','import sys,json,urllib.request as r;m=json.loads(sys.stdin.buffer.readline());r.urlopen(r.Request(m[0],data=sys.stdin.buffer.read(),headers=m[1]),timeout=5)'],stdin=subprocess.PIPE,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,**({'creationflags':0x00000208} if os.name=='nt' else {'start_new_session':True}));p.stdin.write(json.dumps([url,{'Content-Type':'application/json','X-Webhook-Secret':s}]).encode()+bytes([10])+body.encode());p.stdin.close()" 2&gt;/dev/null; echo '{"continue": true}'</code></pre>
+<p><strong>Windows</strong> (PowerShell):</p>
+<pre><code>python -c 'import os,sys,json,shutil,subprocess,getpass,datetime as dt;s=os.environ.get(''AXIA_WEBHOOK_SECRET'','''');url=os.environ.get(''AXIA_WEBHOOK_URL'','''');(s and url) or sys.exit(0);d=json.load(sys.stdin);e=(subprocess.run([''git'',''config'',''user.email''],capture_output=True,text=True).stdout.strip() if shutil.which(''git'') else '''');r=d.get(''workspace_roots'') or [''''];u=os.environ.get(''AXIA_USER_EMAIL'') or e or d.get(''user_email'') or getpass.getuser();body=json.dumps({''event'':''user_prompt_submit'',''timestamp'':dt.datetime.now(dt.timezone.utc).isoformat(),''project_dir'':(r[0] if r else ''''),''data'':{''user_prompt'':d.get(''prompt'',''''),''session_id'':d.get(''conversation_id'',''''),''prompt_id'':d.get(''generation_id'',''''),''user'':u}});p=subprocess.Popen([sys.executable,''-c'',''import sys,json,urllib.request as r;m=json.loads(sys.stdin.buffer.readline());r.urlopen(r.Request(m[0],data=sys.stdin.buffer.read(),headers=m[1]),timeout=5)''],stdin=subprocess.PIPE,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,**({''creationflags'':0x00000208} if os.name==''nt'' else {''start_new_session'':True}));p.stdin.write(json.dumps([url,{''Content-Type'':''application/json'',''X-Webhook-Secret'':s}]).encode()+bytes([10])+body.encode());p.stdin.close()' 2&gt;$null; Write-Output '{"continue": true}'</code></pre>
 <p>Dashboard hooks don't take a <code>failClosed</code> option. They fail open by default, so the prompt still goes through if the hook fails.</p>
 
 <p>Restart Cursor after deploying. In Cursor, the <strong>Hooks</strong> tab under <strong>Customize</strong> lists the hook and shows its output if it fails.</p>
@@ -348,7 +373,8 @@ python3 -c "import os,sys,json,shutil,subprocess,getpass,datetime as dt,urllib.r
   <tr><td>Test returns <code>404</code> Unknown source</td><td>Cursor is not connected in Axia, or the URL is wrong</td><td>Connect Cursor (step 1) and copy the Webhook URL exactly</td></tr>
   <tr><td>Test returns <code>401</code></td><td>Wrong or missing secret</td><td>Paste the secret again, or regenerate it on the Connect page and update every machine</td></tr>
   <tr><td>Test times out</td><td>The machine can't reach Axia</td><td>Check VPN, proxy and firewall rules for the Axia host</td></tr>
-  <tr><td>Test works, but no prompts arrive</td><td>Cursor started without the variables, or the hook isn't loaded</td><td>Check step 3 applied to the login session (on macOS: <code>launchctl getenv AXIA_WEBHOOK_URL</code>), quit and reopen Cursor, check <strong>Customize</strong> &gt; <strong>Hooks</strong></td></tr>
+  <tr><td>Test works, but no prompts arrive</td><td>Cursor started without the variables, or the hook isn't loaded</td><td>Check step 3 applied to the login session (on macOS: <code>launchctl getenv AXIA_WEBHOOK_URL</code>; on Windows: <code>echo %AXIA_WEBHOOK_URL%</code> in a new command prompt), quit and reopen Cursor, check <strong>Customize</strong> &gt; <strong>Hooks</strong></td></tr>
+  <tr><td>No prompts arrive from Windows machines</td><td>Python is missing, or <code>python</code> opens the Microsoft Store placeholder</td><td>Install Python 3 from python.org with <strong>Add python.exe to PATH</strong>, then check <code>python --version</code> in a new terminal</td></tr>
   <tr><td>Prompts are attributed to a login name, not an email</td><td>No <code>AXIA_USER_EMAIL</code>, git email or Cursor account email</td><td>Set <code>AXIA_USER_EMAIL</code> or the developer's git email</td></tr>
 </table>
 
