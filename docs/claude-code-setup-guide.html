@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Code Setup Guide for Axia</title>
+<style>
+  :root {
+    --bg-dark: #1a1a2e;
+    --bg-medium: #16213e;
+    --bg-card: #1f2b4d;
+    --accent-blue: #00b4d8;
+    --accent-teal: #00c9a7;
+    --white: #ffffff;
+    --light-gray: #bbbbcc;
+    --orange: #ff6b35;
+    --red: #ef476f;
+    --green: #06d6a0;
+    --yellow: #ffd166;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg-dark);
+    color: var(--light-gray);
+    line-height: 1.6;
+    padding: 0;
+  }
+  .container { max-width: 900px; margin: 0 auto; padding: 40px 32px; }
+  h1 {
+    font-size: 2.2rem;
+    color: var(--white);
+    margin-bottom: 8px;
+    border-bottom: 3px solid var(--accent-blue);
+    padding-bottom: 12px;
+  }
+  h1 + p { color: var(--accent-blue); font-size: 1.1rem; margin-bottom: 32px; }
+  h2 {
+    font-size: 1.5rem;
+    color: var(--white);
+    margin-top: 48px;
+    margin-bottom: 16px;
+    padding-left: 12px;
+    border-left: 4px solid var(--accent-blue);
+  }
+  h3 {
+    font-size: 1.15rem;
+    color: var(--accent-teal);
+    margin-top: 24px;
+    margin-bottom: 10px;
+  }
+  p { margin-bottom: 12px; }
+  ol, ul { margin-left: 24px; margin-bottom: 16px; }
+  li { margin-bottom: 6px; }
+  a { color: var(--accent-blue); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  strong { color: var(--white); }
+  code {
+    background: var(--bg-medium);
+    color: var(--accent-teal);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.92em;
+    font-family: 'Cascadia Code', 'Fira Code', Consolas, monospace;
+  }
+  pre {
+    background: var(--bg-medium);
+    border: 1px solid #2a3a5c;
+    border-radius: 8px;
+    padding: 16px 20px;
+    overflow-x: auto;
+    margin-bottom: 16px;
+    font-size: 0.88rem;
+    line-height: 1.5;
+  }
+  pre code { background: none; padding: 0; color: var(--light-gray); }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    font-size: 0.92rem;
+  }
+  th {
+    background: #0d476e;
+    color: var(--white);
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 600;
+  }
+  td {
+    padding: 10px 14px;
+    border-bottom: 1px solid #2a3a5c;
+  }
+  tr:nth-child(even) td { background: var(--bg-medium); }
+  tr:nth-child(odd) td { background: var(--bg-card); }
+  .card {
+    background: var(--bg-medium);
+    border: 1px solid #2a3a5c;
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+  }
+  .card.warning {
+    border-color: var(--orange);
+    background: #2d1a0f;
+  }
+  .card.success {
+    border-color: var(--green);
+    background: #0a2a1f;
+  }
+  .card.info {
+    border-color: var(--accent-blue);
+  }
+  .card-title {
+    color: var(--white);
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .env-block {
+    background: #0d1b2a;
+    border: 2px solid var(--accent-blue);
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin: 20px 0;
+  }
+  .env-block h3 { color: var(--accent-blue); margin-top: 0; }
+  .checklist { list-style: none; margin-left: 0; }
+  .checklist li {
+    padding: 8px 0 8px 28px;
+    position: relative;
+  }
+  .checklist li::before {
+    content: '\2610';
+    position: absolute;
+    left: 0;
+    color: var(--accent-blue);
+    font-size: 1.1em;
+  }
+  .step-num {
+    display: inline-block;
+    width: 32px;
+    height: 32px;
+    background: var(--accent-blue);
+    color: var(--bg-dark);
+    border-radius: 50%;
+    text-align: center;
+    line-height: 32px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+  .btn {
+    display: inline-block;
+    background: var(--accent-blue);
+    color: var(--bg-dark);
+    font-weight: 600;
+    padding: 10px 18px;
+    border-radius: 6px;
+    margin: 4px 0 8px;
+  }
+  .btn:hover { text-decoration: none; filter: brightness(1.1); }
+  hr {
+    border: none;
+    border-top: 1px solid #2a3a5c;
+    margin: 40px 0;
+  }
+  @media print {
+    body { background: #fff; color: #333; }
+    .container { max-width: 100%; }
+    h1 { color: #111; border-color: #0078d4; }
+    h2 { color: #111; border-color: #0078d4; }
+    h3 { color: #0078d4; }
+    code { background: #f0f0f0; color: #0078d4; }
+    pre { background: #f5f5f5; border-color: #ddd; }
+    pre code { color: #333; }
+    th { background: #0078d4; }
+    td { border-color: #ddd; }
+    tr:nth-child(even) td { background: #f9f9f9; }
+    tr:nth-child(odd) td { background: #fff; }
+    .card { border-color: #ddd; background: #f9f9f9; }
+    .card.warning { border-color: #e67e22; background: #fef5ec; }
+    .card.success { border-color: #27ae60; background: #eafaf1; }
+    .env-block { border-color: #0078d4; background: #f0f7ff; }
+    strong { color: #111; }
+    a { color: #0078d4; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>Claude Code Setup Guide</h1>
+<p>Send the prompts your developers submit in Claude Code to Axia, so sensitive data pasted into an AI coding agent is detected.</p>
+
+<div class="card info">
+  <div class="card-title">What you'll have at the end</div>
+  <p>A Claude Code <strong>hook</strong> on each developer machine that forwards every submitted prompt to Axia, using the <strong>Webhook URL</strong> and <strong>Webhook Secret</strong> you get on the <strong>Connect</strong> page in Axia.</p>
+</div>
+
+<h2>Prerequisites</h2>
+<ul>
+  <li>Developer machines on <strong>macOS, Linux or Windows</strong>, with Python 3 on the <code>PATH</code> as <code>python3</code> or <code>python</code> (standard library only, nothing to install)</li>
+  <li>On <strong>Windows</strong>: <a href="https://git-scm.com/downloads/win">Git for Windows</a>. Claude Code runs hooks with its Git Bash; without it, the hook does not run.</li>
+  <li>Developer machines can reach your Axia Webhook URL over HTTPS (directly, or through your VPN)</li>
+  <li>For a fleet rollout: an MDM or configuration management tool (Jamf, Kandji, Intune, Ansible…) that can place a file on each machine, or a <strong>Claude for Teams</strong> or <strong>Enterprise</strong> plan to deploy from the Claude admin console</li>
+</ul>
+
+<div class="card warning">
+  <div class="card-title">Tell your developers</div>
+  <p>Capturing prompts is monitoring of what employees type. Treat it as a policy and consent matter, and tell developers before you turn it on.</p>
+</div>
+
+<hr>
+
+<h2><span class="step-num">1</span> Connect Claude Code in Axia</h2>
+
+<ol>
+  <li>In Axia, open <strong>Connect</strong> and find <strong>Claude Code</strong> under AI coding.</li>
+  <li>Click <strong>Connect</strong>.</li>
+  <li>Axia shows a <strong>Webhook URL</strong> and a <strong>Webhook Secret</strong>. Copy both.</li>
+</ol>
+
+<table>
+  <tr><th>Value to copy</th><th>Looks like</th></tr>
+  <tr><td><strong>Webhook URL</strong></td><td><code>https://&lt;your-axia-host&gt;/api/v1/webhooks/claude_code</code></td></tr>
+  <tr><td><strong>Webhook Secret</strong></td><td>A long random string</td></tr>
+</table>
+
+<div class="card warning">
+  <div class="card-title">The secret is shown once</div>
+  <p>Save the Webhook Secret in your password manager now. If you lose it, open the connection on the Connect page and click <strong>Regenerate secret</strong>, then update every machine: the old secret stops working.</p>
+</div>
+
+<hr>
+
+<h2><span class="step-num">2</span> Check the Webhook URL is reachable</h2>
+
+<p>From a developer machine, send a test prompt. Replace the two values with yours:</p>
+
+<pre><code>curl -i -X POST "https://&lt;your-axia-host&gt;/api/v1/webhooks/claude_code" \
+  -H "Content-Type: application/json" \
+  -H "X-Webhook-Secret: &lt;webhook-secret&gt;" \
+  -d '{"event":"user_prompt_submit","timestamp":"2026-01-01T00:00:00Z","project_dir":"/tmp",
+       "data":{"user_prompt":"Axia connectivity test","session_id":"setup-test","prompt_id":"1","user":"you@yourcompany.com"}}'</code></pre>
+
+<p>You should get <code>HTTP 202</code> with <code>"status":"accepted"</code>. If not, see <a href="#troubleshooting">Troubleshooting</a>.</p>
+
+<hr>
+
+<h2><span class="step-num">3</span> Deploy the hook</h2>
+
+<p>All three options below use the same settings. Copy them and replace the two placeholder values with the ones from step 1:</p>
+
+<pre><code>{
+  "env": {
+    "AXIA_WEBHOOK_URL": "https://&lt;your-axia-host&gt;/api/v1/webhooks/claude_code",
+    "AXIA_WEBHOOK_SECRET": "&lt;webhook-secret&gt;"
+  },
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "timeout": 10,
+            "command": "for p in python3 python; do $p -V &gt;/dev/null 2&gt;&amp;1 &amp;&amp; break; done; $p -c \"import os,sys,json,shutil,subprocess,getpass,datetime as dt;s=os.environ.get('AXIA_WEBHOOK_SECRET','');url=os.environ.get('AXIA_WEBHOOK_URL','');(s and url) or sys.exit(0);d=json.load(sys.stdin);e=(subprocess.run(['git','config','user.email'],capture_output=True,text=True).stdout.strip() if shutil.which('git') else '');u=os.environ.get('AXIA_USER_EMAIL') or e or getpass.getuser();body=json.dumps({'event':'user_prompt_submit','timestamp':dt.datetime.now(dt.timezone.utc).isoformat(),'project_dir':d.get('cwd',''),'data':{'user_prompt':d.get('prompt',''),'session_id':d.get('session_id',''),'prompt_id':d.get('prompt_id',''),'user':u}});p=subprocess.Popen([sys.executable,'-c','import sys,json,urllib.request as r;m=json.loads(sys.stdin.buffer.readline());r.urlopen(r.Request(m[0],data=sys.stdin.buffer.read(),headers=m[1]),timeout=5)'],stdin=subprocess.PIPE,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,**({'creationflags':0x00000208} if os.name=='nt' else {'start_new_session':True}));p.stdin.write(json.dumps([url,{'Content-Type':'application/json','X-Webhook-Secret':s}]).encode()+bytes([10])+body.encode());p.stdin.close()\" 2&gt;/dev/null || true"
+          }
+        ]
+      }
+    ]
+  }
+}</code></pre>
+
+<p>Use the <strong>Claude admin console</strong> or <strong>MDM</strong> option for production: developers cannot remove or override them. Use the <strong>per-user</strong> option to try it on your own machine first.</p>
+
+<h3>Option A &mdash; Claude admin console (recommended)</h3>
+<p>For <strong>Claude for Teams</strong> and <strong>Claude for Enterprise</strong>. Claude delivers the settings to every developer who signs in to Claude Code with your organization's account, with no file to deploy.</p>
+<p><a class="btn" href="https://claude.ai/admin-settings/claude-code" target="_blank" rel="noopener noreferrer">Open Claude managed settings &#8599;</a></p>
+<ol>
+  <li>Sign in to claude.ai as an <strong>Owner</strong> or <strong>Primary Owner</strong> of your Claude organization.</li>
+  <li>Go to <strong>Organization settings</strong> &gt; <strong>Claude Code</strong> &gt; <strong>Managed settings</strong> (the button above opens it).</li>
+  <li>Paste the settings above, or merge the <code>env</code> and <code>hooks</code> keys into the settings already there, and save.</li>
+</ol>
+<div class="card info">
+  <div class="card-title">Good to know</div>
+  <p>Developers see a one-time security prompt asking them to approve the hook. Settings from the console only reach sessions signed in with your Claude Teams or Enterprise account. Sessions that use a Claude Console API key, Amazon Bedrock or Google Vertex AI don't receive them: use Option B for those machines.</p>
+</div>
+
+<h3>Option B &mdash; Managed settings file (MDM)</h3>
+<p>Push the settings as a file with your MDM. Claude Code reads it on every machine and it takes precedence over user and project settings. If the file already exists, merge the <code>env</code> and <code>hooks</code> keys into it.</p>
+
+<table>
+  <tr><th>OS</th><th>Path</th></tr>
+  <tr><td>macOS</td><td><code>/Library/Application Support/ClaudeCode/managed-settings.json</code></td></tr>
+  <tr><td>Linux</td><td><code>/etc/claude-code/managed-settings.json</code></td></tr>
+  <tr><td>Windows</td><td><code>C:\Program Files\ClaudeCode\managed-settings.json</code></td></tr>
+</table>
+
+<div class="card info">
+  <div class="card-title">Protect the file</div>
+  <p>The file holds the Webhook Secret. Make it owned by root and not writable by users (for example <code>chown root:wheel</code> and <code>chmod 644</code> on macOS; on Windows, only Administrators can write to <code>C:\Program Files</code>). The secret only lets a machine send prompts to Axia; it cannot read anything.</p>
+</div>
+
+<h3>Option C &mdash; Per-user (for testing)</h3>
+<ol>
+  <li>Merge the settings into <code>~/.claude/settings.json</code> on your machine.</li>
+  <li>Restart Claude Code. Run <code>/hooks</code> in Claude Code to check that <code>UserPromptSubmit</code> lists the hook.</li>
+</ol>
+<p>A developer can edit or remove this file, so don't rely on it for monitoring.</p>
+
+<h3>Which user is the prompt attributed to?</h3>
+<p>Claude Code does not tell hooks who the user is, so the hook works it out in this order:</p>
+<ol>
+  <li>The <code>AXIA_USER_EMAIL</code> environment variable, if set</li>
+  <li>The developer's <code>git config user.email</code></li>
+  <li>The operating system login name</li>
+</ol>
+<p>For reliable attribution, set <code>AXIA_USER_EMAIL</code> per user through your MDM, or make sure developers' git email is their work email. The same order is used for Cursor, so one person's Claude Code and Cursor prompts match up.</p>
+
+<hr>
+
+<h2><span class="step-num">4</span> Verify</h2>
+<ol>
+  <li>On a machine with the hook, start Claude Code and send any prompt.</li>
+  <li>In Axia, the Claude Code connection on the Connect page shows a recent event. A prompt containing test sensitive data (for example a fake card number) should open a case.</li>
+</ol>
+
+<hr>
+
+<h2 id="troubleshooting">Troubleshooting</h2>
+<table>
+  <tr><th>Symptom</th><th>Cause</th><th>Fix</th></tr>
+  <tr><td>Test returns <code>404</code> Unknown source</td><td>Claude Code is not connected in Axia, or the URL is wrong</td><td>Connect Claude Code (step 1) and copy the Webhook URL exactly</td></tr>
+  <tr><td>Test returns <code>401</code></td><td>Wrong or missing secret</td><td>Paste the secret again, or regenerate it on the Connect page and update every machine</td></tr>
+  <tr><td>Test times out</td><td>The machine can't reach Axia</td><td>Check VPN, proxy and firewall rules for the Axia host</td></tr>
+  <tr><td>Test works, but no prompts arrive</td><td>The hook isn't loaded, or the variables are empty</td><td>Run <code>/hooks</code> in Claude Code; check the <code>env</code> block; check <code>python3 --version</code> (Windows: <code>python --version</code>) works in a terminal</td></tr>
+  <tr><td>No prompts arrive from Windows machines</td><td>Git for Windows is missing, so Claude Code runs the hook in PowerShell</td><td>Install Git for Windows, or set <code>CLAUDE_CODE_GIT_BASH_PATH</code> if it is installed somewhere Claude Code doesn't find</td></tr>
+  <tr><td>Prompts are attributed to a login name, not an email</td><td>No <code>AXIA_USER_EMAIL</code> and no git email</td><td>Set <code>AXIA_USER_EMAIL</code> or the developer's git email</td></tr>
+</table>
+
+<hr>
+
+<h2>Verification Checklist</h2>
+
+<ul class="checklist">
+  <li>Claude Code connected on the Axia <strong>Connect</strong> page</li>
+  <li><strong>Webhook URL</strong> and <strong>Webhook Secret</strong> saved in your password manager</li>
+  <li>Test <code>curl</code> from a developer machine returns <code>202</code></li>
+  <li>Developers informed that prompts are monitored</li>
+  <li>Settings deployed from the Claude admin console, or as a managed settings file by MDM (owned by root)</li>
+  <li><code>AXIA_USER_EMAIL</code> set, or developers' git email is their work email</li>
+  <li>A test prompt shows up in Axia</li>
+</ul>
+
+<hr>
+
+</div>
+</body>
+</html>
