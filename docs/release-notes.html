@@ -7,6 +7,57 @@
 <main><div class="doc">
 <div class="note">This page lists every Axia Security release, newest first.</div>
 
+<h2>v3.1.0 — 3 November 2026</h2>
+<h3>New</h3>
+<ul>
+<li><b>Automatic directory sync.</b> Axia keeps your user directory up to date from Microsoft Entra ID and Google Workspace. You no longer have to upload it by hand.</li>
+<li><b>Slack files.</b> Axia now reads the content of files shared in the Slack channels you connect, not just the messages.</li>
+<li><b>Faster email analysis.</b> A dedicated classifier checks each email first, so routine emails are released sooner. A small sample of those emails still goes through the full analysis, as a quality check.</li>
+</ul>
+<h3>Improved</h3>
+<ul>
+<li>Case pages are easier to scan. The page opens collapsed, and the evidence view lists findings first, with long text and email threads collapsed.</li>
+<li>For every email client (Outlook, Gmail and others), a person's reply is shown separately from the quoted thread below it.</li>
+<li>The case timeline shows who assigned a case and who owned it before. Status changes show the old and the new status, including for bulk changes.</li>
+<li>Every connector on the Connect page links to its setup guide in the Help Center.</li>
+</ul>
+<h3>Fixed</h3>
+<ul>
+<li>After Slack was connected, the Connect page sometimes failed to load.</li>
+<li>The Outlook connector kept logging errors for mailboxes that don't exist.</li>
+<li>In Slack cases, the person involved is now the first person to post, ordered by posting time.</li>
+</ul>
+<h3>Security</h3>
+<ul><li>Updated third-party libraries to patched versions.</li></ul>
+<p>Self-hosted: install or upgrade with Helm chart version <code>3.1.0</code>. See the <a href="deployment-guide.html">Deployment guide</a>.</p>
+
+<h2>v3.0.0 — 28 October 2026</h2>
+<h3>New</h3>
+<ul>
+<li><b>Slack connector.</b> Connect Slack from the Connect page and choose which channels Axia reads. Slack messages show up in cases like email does. See the <a href="slack-setup-guide.html">Slack setup guide</a>.</li>
+<li><b>Sign in with JumpCloud.</b> Users can sign in with JumpCloud SSO. New users are provisioned automatically, and the Users page shows how each user signs in.</li>
+<li><b>Manage policies from Intel.</b> Administrators can ask Intel which policies are active, and have Intel propose a new policy, which is added once they confirm it. The same tools are available from the Axia Security MCP server in Claude Desktop. The policy audit log shows where each change was made.</li>
+<li><b>Connect an AI agent.</b> When you're already signed in to the dashboard, you can connect an AI agent to Axia without signing in again. The agent sign-in page also offers <i>Sign in with your company account</i>.</li>
+<li><b>Role owners from the organization file.</b> A new <code>axia_role</code> column (<code>hr</code>, <code>legal</code> or <code>ciso</code>) sets each role's owner. It's validated when you upload the file.</li>
+<li><b>Replies on Google Workspace engagement mailboxes.</b> Axia reads replies sent to an engagement mailbox in Google Workspace.</li>
+</ul>
+<h3>Improved</h3>
+<ul>
+<li>Self-hosted installations can set up judgment and engagement entirely from the Connect page, without editing configuration files.</li>
+<li>When your session expires and you sign in again, you're taken back to the page you were on.</li>
+</ul>
+<h3>Fixed</h3>
+<ul><li>The runtime configuration editor wouldn't save while Azure DevOps static fields were configured.</li></ul>
+<h3>Security</h3>
+<ul>
+<li><b>Stronger passwords.</b> One strong password rule now applies wherever a password is set, including the break-glass administrator. User forms list the rules and refuse weak passwords. Users whose password doesn't meet the rules are asked to choose a new one when they next sign in. Making a user an administrator requires a new, administrator-strength password.</li>
+<li>Changing a user's credentials signs out their active sessions.</li>
+<li>Uploaded Intel and guidance documents are checked for file type, content, malicious content and size.</li>
+<li>Sign-in codes are kept out of the logs.</li>
+<li>Resolved all critical and high severity issues in dependencies and source code, and updated third-party libraries.</li>
+</ul>
+<p>Self-hosted: Helm charts are now versioned with the product (<code>3.0.0</code>) and signed with cosign. See the <a href="deployment-guide.html">Deployment guide</a>.</p>
+
 <h2>v0.97.0 — 21 October 2026</h2>
 <h3>New</h3>
 <ul>
@@ -38,4 +89,4 @@
 <li>Planned maintenance is announced in advance. See <a href="support.html">Support</a>.</li>
 </ul>
 </div></main>
-<footer><div class="bar">© Axia Security Ltd. · Last updated 21 October 2026 · Questions? See <a href="support.html">Support</a>.</div></footer></body></html>
+<footer><div class="bar">© Axia Security Ltd. · Last updated 3 November 2026 · Questions? See <a href="support.html">Support</a>.</div></footer></body></html>
