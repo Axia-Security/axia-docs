@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Slack setup guide — Axia Security Help Center</title><meta name="description" content="Connect a Slack workspace so Axia Security reads the channels you add its app to.">
+<link rel="stylesheet" href="assets/help.css"></head>
+<body><header class="top"><div class="bar"><a class="brand" href="index.html">Axia Security <span>Help Center</span></a><nav><a href="product-overview.html">Product overview</a><a href="user-guide.html">User guide</a><a href="faq.html">FAQ</a><a href="release-notes.html">Release notes</a><a href="support.html">Support</a><a href="deployment-guide.html">Deployment guide</a></nav></div>
+<div class="hero"><h1>Slack setup guide</h1><p>Connect a Slack workspace so Axia Security reads the channels you add its app to. You create the Axia Security app in your own Slack from a manifest Axia Security generates, install it, and paste its two credentials on the Connect screen.</p></div></header>
+<main><div class="doc">
+
+<div class="note"><p><b>What you need.</b> An Axia Security administrator account (the Connect screen is for administrators), and permission in Slack to create and install apps in your workspace.</p>
+<p><b>Where to start.</b> Open Slack on the Connect screen. The same steps are shown there, above the credential fields.</p></div>
+
+<h2 id="what-axia-does">What Axia Security does in Slack</h2>
+<p>Axia Security reads the messages in the Slack channels you add its app to, and the files shared there, including their content — nothing else. It does not read direct messages or any other channel.</p>
+<p>Axia Security never posts, reacts or changes anything in Slack.</p>
+<p>Reading starts once you finish the two steps shown after you connect: Slack checks the address Axia Security receives events at, and you add the app to a channel. It stops when you remove the Slack connection on the Connect screen.</p>
+
+<h2 id="permissions">Why the app asks for each permission</h2>
+<p>The manifest asks for these seven read permissions and nothing else. Connect checks that the app has each of them.</p>
+<table>
+<tr><th>Permission</th><th>Why</th></tr>
+<tr><td><code>channels:history</code></td><td>Reading messages in the public channels the Axia Security bot was added to</td></tr>
+<tr><td><code>groups:history</code></td><td>Reading messages in the private channels the Axia Security bot was added to</td></tr>
+<tr><td><code>channels:read</code></td><td>Reading the name and sharing of the public channels the bot is in</td></tr>
+<tr><td><code>groups:read</code></td><td>Reading the name and sharing of the private channels the bot is in</td></tr>
+<tr><td><code>users:read</code></td><td>Telling members, guests and people from outside the organization apart</td></tr>
+<tr><td><code>users:read.email</code></td><td>Reading each author's email address, to match them to the employee directory</td></tr>
+<tr><td><code>files:read</code></td><td>Reading the files shared in those channels, including their content</td></tr>
+</table>
+
+<h2 id="set-up">Set up the Axia Security app in Slack</h2>
+
+<h3>1. Copy the Axia Security app manifest</h3>
+<p>On the Connect screen, select <b>Copy manifest</b>. If your browser does not allow copying, select <b>Download manifest</b> and open the file in a text editor. Keep the Connect window open: after you create the app in Slack, you come back to it to paste two values from the app.</p>
+
+<h3>2. Start a new app in Slack</h3>
+<p>Open <a href="https://api.slack.com/apps" target="_blank" rel="noopener noreferrer">api.slack.com/apps</a> in a new tab, sign in to your Slack workspace if Slack asks, and select <b>Create an App</b>.</p>
+
+<h3>3. Create the app from the manifest</h3>
+<p>Select <b>From a manifest</b>, then <b>Continue</b>. On the next screen choose the <b>YAML</b> tab, delete the example text, paste the manifest you copied in step 1, choose your workspace and select <b>Next</b>.</p>
+
+<h3>4. Install the app in your workspace</h3>
+<p>Slack shows a summary of the app. Select <b>Create and Install</b>, then <b>Allow</b> if Slack asks.</p>
+
+<h3>5. Open the app's settings</h3>
+<p>Slack shows “Axia Security is ready!” with Slack CLI steps. You don't need them: select <b>Go to App Settings</b>. Keep this Slack tab open.</p>
+
+<h3>6. Copy the Signing Secret</h3>
+<p>In the app's settings, select <b>Basic Information</b> in the left menu. Under <b>App Credentials</b>, next to <b>Signing Secret</b>, select <b>Show</b>, then copy the value. Copy the Signing Secret, not the Client Secret or the Verification Token beside it.</p>
+
+<h3>7. Paste the Signing Secret on the Connect screen</h3>
+<p>Come back to the Connect window and paste it into the <b>Signing Secret</b> field at the bottom.</p>
+
+<h3>8. Copy the Bot User OAuth Token</h3>
+<p>In the Slack tab, select <b>OAuth &amp; Permissions</b> in the left menu. Under <b>OAuth Tokens</b>, next to <b>Bot User OAuth Token</b> (it starts with <code>xoxb-</code>), select <b>Copy</b>.</p>
+
+<h3>9. Paste the token on the Connect screen and connect</h3>
+<p>Come back to the Connect window, paste it into the <b>Bot User OAuth Token</b> field at the bottom and select <b>Test &amp; Connect</b>. The two steps left then appear on the Connect screen.</p>
+<p>Axia Security checks the token with Slack and checks that the app has every permission listed above. If a permission is missing, Connect names it (see <a href="#troubleshooting">If something does not work</a>).</p>
+<p>You paste both values directly on the Connect screen; nobody needs to send them to Axia Security by email.</p>
+
+<h2 id="finish">Finish in Slack</h2>
+<p>After Test &amp; Connect, the Connect screen says: "Slack is connected. Reading starts once you finish steps 10 and 11 in Slack." It then shows steps 10 and 11 and the list <b>Slack channels Axia Security reads</b>.</p>
+
+<h3>10. Verify the events address in Slack</h3>
+<p>In the Slack tab, select <b>Event Subscriptions</b> in the left menu. The Request URL may first show “Your URL didn't respond”: that is expected (Slack tried it before Axia Security had your secret). Select <b>Retry</b> (or <b>Verify</b>); it turns <b>Verified</b>. Then select <b>Save Changes</b> at the bottom of the page.</p>
+
+<h3>11. Add the Axia Security app to each channel it should read</h3>
+<p>In the channel, type <code>/invite @Axia</code> and choose <b>Axia Security</b> from the list that appears (public and private channels alike). Or open the channel's details → <b>Integrations</b> (in newer Slack: <b>Agents &amp; apps</b>) → <b>Add an app</b> → <b>Axia Security</b>. You need permission to invite people in that channel; if Slack says you don't have it, ask the channel's manager or a workspace admin, or use a channel you created. Axia Security reads exactly the channels the app is in; remove it from a channel to stop.</p>
+<p>On the Connect screen, select <b>Done</b> when you have finished. The list <b>Slack channels Axia Security reads</b> is an optional check: it shows what Slack says the app is in right now, and marks channels that are <b>Private</b> or <b>Shared with another organization</b>. Select <b>Refresh</b> after you add the app to a channel.</p>
+
+<h2 id="troubleshooting">If something does not work</h2>
+
+<h3>Connect says "Missing required permissions"</h3>
+<p>The app in Slack does not have every permission Axia Security reads with; Connect names each one that is missing. In your app's settings, open <b>OAuth &amp; Permissions</b> → <b>Scopes</b> and add each permission named. Reinstall the app to your workspace, then select <b>Test &amp; Connect</b> again.</p>
+
+<h3>Slack says "Your URL didn't respond"</h3>
+<p>Slack tried the Request URL before Axia Security had your Signing Secret, which is expected the first time. Select <b>Retry</b> next to the Request URL; once it shows <b>Verified</b>, select <b>Save Changes</b>. If it still does not respond, the most common reason is that the secret pasted on the Connect screen is the Client Secret or the Verification Token instead of the Signing Secret: on the Connect screen select <b>Manage</b> on the Slack card, paste the <b>Signing Secret</b> from Basic Information → App Credentials again and select <b>Save changes</b>, then select <b>Retry</b> in Slack. If it still does not turn Verified, contact <a href="support.html">Support</a>.</p>
+
+<h3>Slack says "You don't have permission to invite people to this channel"</h3>
+<p>Adding the app to a channel needs permission to invite people to that channel. Ask the channel's manager or a workspace admin to add the Axia Security app there, or use a channel you created.</p>
+
+<h3>The Slack card says "Awaiting first event"</h3>
+<p>The connection is saved, but no message has reached Axia Security yet. Check that the Request URL shows Verified (step 10) and that the app is in at least one channel (step 11). It clears when the first message arrives in a channel the app is in.</p>
+
+<h3>The Slack card says "No messages for 24 h"</h3>
+<p>No message has reached Axia Security from the workspace in the last 24 hours. A quiet channel or a weekend can cause it. Check that the app is still in the channels Axia Security should read and that the Request URL still shows Verified. It clears when the next message arrives.</p>
+
+<h2 id="checklist">Verification checklist</h2>
+<ul>
+<li>The app is created from the Axia Security manifest and installed to your workspace (<b>Create and Install</b>).</li>
+<li>The <b>Signing Secret</b> (not the Client Secret) and the <b>Bot User OAuth Token</b> (<code>xoxb-</code>) are pasted, and <b>Test &amp; Connect</b> succeeded.</li>
+<li>The Request URL shows <b>Verified</b> under Event Subscriptions, and you selected <b>Save Changes</b>.</li>
+<li>The Axia Security app is in each channel Axia Security should read, and those channels appear under <b>Slack channels Axia Security reads</b>.</li>
+<li>After the first message in one of those channels, the Slack card no longer says <b>Awaiting first event</b>.</li>
+</ul>
+
+</div></main>
+<footer><div class="bar">© Axia Security Ltd. · Last updated 2 November 2026 · Questions? See <a href="support.html">Support</a>.</div></footer></body></html>
