@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JumpCloud Directory Setup Guide for Axia</title>
+<style>
+  :root {
+    --bg-dark: #1a1a2e;
+    --bg-medium: #16213e;
+    --bg-card: #1f2b4d;
+    --accent-blue: #00b4d8;
+    --accent-teal: #00c9a7;
+    --white: #ffffff;
+    --light-gray: #bbbbcc;
+    --orange: #ff6b35;
+    --red: #ef476f;
+    --green: #06d6a0;
+    --yellow: #ffd166;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg-dark);
+    color: var(--light-gray);
+    line-height: 1.6;
+    padding: 0;
+  }
+  .container { max-width: 900px; margin: 0 auto; padding: 40px 32px; }
+  h1 {
+    font-size: 2.2rem;
+    color: var(--white);
+    margin-bottom: 8px;
+    border-bottom: 3px solid var(--accent-blue);
+    padding-bottom: 12px;
+  }
+  h1 + p { color: var(--accent-blue); font-size: 1.1rem; margin-bottom: 32px; }
+  h2 {
+    font-size: 1.5rem;
+    color: var(--white);
+    margin-top: 48px;
+    margin-bottom: 16px;
+    padding-left: 12px;
+    border-left: 4px solid var(--accent-blue);
+  }
+  h3 {
+    font-size: 1.15rem;
+    color: var(--accent-teal);
+    margin-top: 24px;
+    margin-bottom: 10px;
+  }
+  p { margin-bottom: 12px; }
+  ol, ul { margin-left: 24px; margin-bottom: 16px; }
+  li { margin-bottom: 6px; }
+  a { color: var(--accent-blue); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  strong { color: var(--white); }
+  code {
+    background: var(--bg-medium);
+    color: var(--accent-teal);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.92em;
+    font-family: 'Cascadia Code', 'Fira Code', Consolas, monospace;
+  }
+  pre {
+    background: var(--bg-medium);
+    border: 1px solid #2a3a5c;
+    border-radius: 8px;
+    padding: 16px 20px;
+    overflow-x: auto;
+    margin-bottom: 16px;
+    font-size: 0.88rem;
+    line-height: 1.5;
+  }
+  pre code { background: none; padding: 0; color: var(--light-gray); }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    font-size: 0.92rem;
+  }
+  th {
+    background: #0d476e;
+    color: var(--white);
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 600;
+  }
+  td {
+    padding: 10px 14px;
+    border-bottom: 1px solid #2a3a5c;
+  }
+  tr:nth-child(even) td { background: var(--bg-medium); }
+  tr:nth-child(odd) td { background: var(--bg-card); }
+  .card {
+    background: var(--bg-medium);
+    border: 1px solid #2a3a5c;
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+  }
+  .card.warning {
+    border-color: var(--orange);
+    background: #2d1a0f;
+  }
+  .card.success {
+    border-color: var(--green);
+    background: #0a2a1f;
+  }
+  .card.info {
+    border-color: var(--accent-blue);
+  }
+  .card-title {
+    color: var(--white);
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .env-block {
+    background: #0d1b2a;
+    border: 2px solid var(--accent-blue);
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin: 20px 0;
+  }
+  .env-block h3 { color: var(--accent-blue); margin-top: 0; }
+  .checklist { list-style: none; margin-left: 0; }
+  .checklist li {
+    padding: 8px 0 8px 28px;
+    position: relative;
+  }
+  .checklist li::before {
+    content: '\2610';
+    position: absolute;
+    left: 0;
+    color: var(--accent-blue);
+    font-size: 1.1em;
+  }
+  .step-num {
+    display: inline-block;
+    width: 32px;
+    height: 32px;
+    background: var(--accent-blue);
+    color: var(--bg-dark);
+    border-radius: 50%;
+    text-align: center;
+    line-height: 32px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+  .btn {
+    display: inline-block;
+    background: var(--accent-blue);
+    color: var(--bg-dark);
+    font-weight: 600;
+    padding: 10px 18px;
+    border-radius: 6px;
+    margin: 4px 0 8px;
+  }
+  .btn:hover { text-decoration: none; filter: brightness(1.1); }
+  hr {
+    border: none;
+    border-top: 1px solid #2a3a5c;
+    margin: 40px 0;
+  }
+  @media print {
+    body { background: #fff; color: #333; }
+    .container { max-width: 100%; }
+    h1 { color: #111; border-color: #0078d4; }
+    h2 { color: #111; border-color: #0078d4; }
+    h3 { color: #0078d4; }
+    code { background: #f0f0f0; color: #0078d4; }
+    pre { background: #f5f5f5; border-color: #ddd; }
+    pre code { color: #333; }
+    th { background: #0078d4; }
+    td { border-color: #ddd; }
+    tr:nth-child(even) td { background: #f9f9f9; }
+    tr:nth-child(odd) td { background: #fff; }
+    .card { border-color: #ddd; background: #f9f9f9; }
+    .card.warning { border-color: #e67e22; background: #fef5ec; }
+    .card.success { border-color: #27ae60; background: #eafaf1; }
+    .env-block { border-color: #0078d4; background: #f0f7ff; }
+    strong { color: #111; }
+    a { color: #0078d4; }
+  }
+</style>
+<body>
+<div class="container">
+<h1>JumpCloud Directory Setup Guide</h1>
+<p>Keep Axia's employee directory in sync with the people you manage in JumpCloud: names, departments, job titles, locations and managers.</p>
+
+<div class="card info">
+  <div class="card-title">What you'll have at the end</div>
+  <p>A <strong>JumpCloud Directory</strong> connection on the Axia <strong>Connect</strong> page. Axia reads your JumpCloud users right after you connect and every hour after that, and uses them as the org directory instead of an uploaded CSV. Axia only reads; it never changes anything in JumpCloud.</p>
+</div>
+
+<h2>Prerequisites</h2>
+<ul>
+  <li>A JumpCloud administrator who can create service accounts</li>
+  <li>An Axia administrator account</li>
+  <li>No other directory (Microsoft Entra ID or Google Workspace) connected in Axia. Axia uses one directory at a time</li>
+</ul>
+
+<div class="card warning">
+  <div class="card-title">Use a service account with the Read Only role</div>
+  <p>Give Axia its own JumpCloud <strong>service account</strong> rather than a person's API key: it keeps working when people leave, and its role limits what the key can do. The <strong>Read Only</strong> role is enough; Axia only reads users. If you regenerate the key, update it in Axia.</p>
+</div>
+
+<hr>
+
+<h2><span class="step-num">1</span> Create a service account and its API key</h2>
+<ol>
+  <li>Sign in to the JumpCloud Admin Portal.</li>
+  <li>Go to <strong>Settings</strong> &gt; <strong>Service Accounts</strong> and create a service account for Axia, for example <code>axia-directory-sync</code>.</li>
+  <li>Give it the <strong>Read Only</strong> role.</li>
+  <li>Copy its API key (it starts with <code>jcs_</code>) and store it in your password manager; JumpCloud shows it only once.</li>
+</ol>
+
+<h2><span class="step-num">2</span> Find your organization ID (multi-tenant administrators only)</h2>
+<p>Skip this step if your administrator manages a single JumpCloud organization.</p>
+<p>If you manage several organizations from the Multi-Tenant Portal, the key can reach all of them, so Axia must be told which one to read:</p>
+<ol>
+  <li>Open the organization in the Admin Portal.</li>
+  <li>Go to <strong>Settings</strong> &gt; <strong>Organization Profile</strong> and copy the <strong>Organization ID</strong> (24 letters and digits).</li>
+</ol>
+
+<h2><span class="step-num">3</span> Check your region</h2>
+<table>
+  <tr><th>You sign in at</th><th>Region in Axia</th></tr>
+  <tr><td><code>console.jumpcloud.com</code></td><td><strong>US</strong></td></tr>
+  <tr><td><code>console.eu.jumpcloud.com</code></td><td><strong>EU</strong></td></tr>
+</table>
+
+<h2><span class="step-num">4</span> Connect in Axia</h2>
+<ol>
+  <li>In Axia, open <strong>Connect</strong> and choose <strong>JumpCloud Directory</strong>.</li>
+  <li>Paste the <strong>API Key</strong>.</li>
+  <li>Paste the <strong>Organization ID</strong> if you have one from step 2; otherwise leave it blank.</li>
+  <li>Choose the <strong>Region</strong> from step 3.</li>
+  <li>Choose <strong>Connect</strong>. Axia reads one user to check the key before saving the connection.</li>
+</ol>
+<p>The first sync starts at once. Its progress and result show in <strong>Settings</strong> &gt; <strong>Organization relations</strong>.</p>
+
+<div class="card success">
+  <div class="card-title">How JumpCloud users map to Axia</div>
+  <table>
+    <tr><th>JumpCloud</th><th>Axia employee directory</th></tr>
+    <tr><td>Email</td><td>Email</td></tr>
+    <tr><td>Display name (else first and last name)</td><td>Name</td></tr>
+    <tr><td>Job title</td><td>Role</td></tr>
+    <tr><td>Department</td><td>Department</td></tr>
+    <tr><td>Location</td><td>Location</td></tr>
+    <tr><td>Manager</td><td>Manager (by the manager's email)</td></tr>
+    <tr><td>Suspended, locked, or not yet activated</td><td>Not a member of the organization</td></tr>
+  </table>
+</div>
+
+<hr>
+
+<h2 id="troubleshooting">Troubleshooting</h2>
+<table>
+  <tr><th>Message in Axia</th><th>Cause</th><th>Fix</th></tr>
+  <tr><td>JumpCloud refused the API key</td><td>The key was regenerated or mistyped, the region is wrong, or the organization ID is wrong</td><td>Check the region (step 3) and the organization ID (step 2); if needed, create a new key (step 1), then edit the connection</td></tr>
+  <tr><td>The API key cannot read users</td><td>The service account's role can't read users, or a multi-tenant key has no organization ID</td><td>Give the service account the <strong>Read Only</strong> role or above, or set the organization ID</td></tr>
+  <tr><td>A directory is already connected</td><td>Microsoft Entra ID or Google Workspace is the directory</td><td>Disconnect it first; Axia uses one directory at a time</td></tr>
+  <tr><td>People have no manager</td><td>The manager isn't set in JumpCloud, or is a user outside this organization</td><td>Set the user's manager in JumpCloud; the next hourly sync picks it up</td></tr>
+  <tr><td>JumpCloud could not be reached</td><td>A network problem, or the wrong region</td><td>Check the region (step 3); Axia retries on the next sync</td></tr>
+</table>
+
+<hr>
+
+<h2>Verification Checklist</h2>
+<ul class="checklist">
+  <li>A JumpCloud service account with the Read Only role created for Axia</li>
+  <li>API key saved in your password manager</li>
+  <li>Organization ID noted (multi-tenant administrators only)</li>
+  <li>JumpCloud Directory connected on the Axia <strong>Connect</strong> page with the right region</li>
+  <li><strong>Settings</strong> &gt; <strong>Organization relations</strong> shows JumpCloud with your people count</li>
+  <li>A few people spot-checked for department, job title and manager</li>
+</ul>
+
+<hr>
+
+</div>
+</body>
+</html>
